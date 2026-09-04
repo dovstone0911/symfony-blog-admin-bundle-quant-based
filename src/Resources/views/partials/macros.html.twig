@@ -1,0 +1,491 @@
+{% macro bodyClsName() %}
+    {{- 'theme-lite ' ~ (app.request.get('_ajaxify') is null ? 'preloading' : '') -}}
+{% endmacro %}
+
+{% macro bgColor() %}
+    {% set c = random(['#a03c3c', '#009688', '#3F51B5', '#000000', '#607D8B', '#CDDC39', '#FF5722', '#2196F3', '#795548', '#767948', '#b4bf0c']) %}
+    {{ ('style="background-color:'~c~'"')|raw }}
+{% endmacro %}
+
+{% macro getAside() %}
+
+    {# {% set routeType = app.request.get('_route') ?? 'users' %} #}
+
+    <aside id="aside" class="aside">
+
+        <div class="scroller-inner">
+
+            <div class="liner">
+                <div class="content">
+                    <a href="{{ path('_updateUser', {'id':attr(User, 'id')}) }}" class="text-ellipsis">
+                        <div class="icon" {{ _self.bgColor() }}><span class="iconify" data-icon="gridicons:user" data-inline="false"></span></div>
+                        <span>{{attr(User, 'username')}}</span>
+                    </a>
+                    <a href="{{ path('_logoutAdmin') }}" class="text-ellipsis">
+                        <div class="icon" style="background-color:#f31100"><span class="iconify" data-icon="bx:bx-power-off" data-inline="false"></span></div>
+                        <span>Se déconnecter</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="liner">
+                <div class="content">
+                    {% for title, data in {
+                        "Aller au site web":{ 'icon':'eye', 'link':getUrl(), 'attr':'target="_blank"' },
+                        "Tableau de bord":{ 'icon':'dashboard', 'link':path('_dashboard') },
+                        "Pages":{ 'icon':'files-o', 'link':path('_listBloggy', {'type':'page'}) },
+                        "Menus":{ 'icon':'sitemap', 'link':path('_listBloggy', {'type':'menu'}) },
+                        "Rôles":{ 'icon':'lock', 'link':path('_listBloggy', {'type':'role'}) },
+                        "Utilisateurs":{ 'icon':'user-secret', 'link':path('_listUsers') },
+                        "Log":{ 'icon':'floppy-o', 'link':path('_listBloggy', {'type':'log'}) },
+                    } %}
+
+                        {% if userCan('admin') or ((userCan('edit', false) or userCan('moderate', false)) and title not in ['Menus', 'Rôles', 'Utilisateurs', 'Log']) %}
+                            <a href="{{data.link}}" {{(data.attr ?? '')|raw}} class="text-ellipsis" title="{{title}}">
+                                <div class="icon" {{ _self.bgColor() }}><i class="fa fa-{{data.icon}}"></i></div>
+                                <span>{{title}}</span>
+                            </a>
+                        {% endif %}
+
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% set acf = orderBy(getAcf(), 'title') %}
+            {% if acf is not empty %}
+
+                {% if userCan('edit', false) or userCan('moderate', false) %}
+                    <div class="liner icon-sm">
+                        <div class="liner-label"><i class="fa fa-puzzle-piece"></i> Eléments associatifs</div>
+                        <div class="content">
+                            {% for data in acf %}
+                                {% set acf_type = attr(data, 'acf_type') %}
+                                {% if 
+                                    (acf_type != '' and acf_type != 'default')
+                                    and
+                                    (
+                                        userCan('admin')
+                                        or
+                                        ((userCan('edit', false) or userCan('moderate', false)) and userCanHandleAcf(data))
+                                    )
+                                    and
+                                    data.published == 'on'
+                                %}
+                                    <a href="{{path('_listBloggy', {'type':attr(data, 'name')})}}" class="text-ellipsis" title="{{attr(data, 'title')}}">
+                                        <div class="icon" {{ _self.bgColor() }}><span class="iconify" data-icon="{{attr(data, 'icon')}}" data-inline="false"></span></div>
+                                        <span>{{attr(data, 'title')}}</span>
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                    <div class="liner">
+                        <div class="content">
+                            {% for data in acf %}
+                                {% set acf_type = attr(data, 'acf_type') %}
+                                {% if 
+                                    (acf_type is null or acf_type == 'default')
+                                    and
+                                    (
+                                        userCan('admin')
+                                        or
+                                        ((userCan('edit', false) or userCan('moderate', false)) and userCanHandleAcf(data))
+                                    )
+                                    and
+                                    data.published == 'on'
+                                %}
+                                    <a href="{{path('_listBloggy', {'type':attr(data, 'name')})}}" class="text-ellipsis" title="{{attr(data, 'title')}}">
+                                        <div class="icon" {{ _self.bgColor() }}><span class="iconify" data-icon="{{attr(data, 'icon')}}" data-inline="false"></span></div>
+                                        <span>{{ attr(data, 'title') }}</span>
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+            {% endif %}
+
+            {% set boNavData = orderBy(getGlobal('backOfficeNavData'), 'title') %}
+            {% if boNavData is not empty %}
+                <div class="liner">
+                    <div class="content">
+                        {% for data in boNavData %}
+                            {% if userCan('admin') or data.id in attr(User, 'acfToHandle') %}
+
+                                <a href="{{ data[2] }}" class="text-ellipsis" title="{{data[0]}}">
+                                    <div class="icon" {{ _self.bgColor() }}><span class="iconify" data-icon="{{data[1]}}" data-inline="false"></span></div>
+                                    <span>{{ data[0] }}</span>
+                                </a>
+                                
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if userCan('admin') %}
+                <div class="liner icon-sm">
+                    <div class="liner-label"><i class="fa fa-puzzle-piece"></i> ACF</div>
+                    <div class="content">
+                        {% for title, data in {
+                            "Ajouter":{ 'icon':'plus', 'link':path('_createBloggy', {'type':'acf'}) },
+                            "Tous les ACF":{ 'icon':'puzzle-piece', 'link':path('_listBloggy', {'type':'acf'}) },
+                        } %}
+                            <a href="{{data.link}}" {{(data.attr ?? '')|raw}} class="text-ellipsis" title="{{title}}">
+                                <div class="icon" {{ _self.bgColor() }}><i class="fa fa-{{data.icon}}"></i></div>
+                                <span>{{title}}</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="liner">
+                    <div class="content">
+                        <a href="{{ path('_settings') }}" class="text-ellipsis" title="Paramètres">
+                            <div class="icon" {{ _self.bgColor() }}><i class="fa fa-cogs"></i></div>
+                            <span>Paramètres</span>
+                        </a>
+                    </div>
+                </div>
+                {#<div class="liner icon-sm">
+                    <div class="liner-label"><i class="fa fa-refresh"></i> Réinitialiser compteurs</div>
+                    <div class="content">
+                        {% for title, data in {
+                            "Vues":{ 'icon':'eye', 'link':path('_resetHits') },
+                            "Log":{ 'icon':'floppy-o', 'link':path('_resetByType',{'type': 'log'}) },
+                        } %}
+                            <a data-post-href="{{data.link}}" data-info='{}' {{(data.attr ?? '')|raw}} class="text-ellipsis cursor-pointer" title="{{title}}">
+                                <div class="icon" {{ _self.bgColor() }}><i class="fa fa-{{data.icon}}"></i></div>
+                                <span>{{title}}</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>#}
+            {% endif %}
+        
+        </div>
+
+    </aside>
+    
+{% endmacro %}
+
+{% macro getTiles(params) %}
+
+    {% set b = params.data.bloggy ?? [] %}
+    {% set acfChildren = attr(params, 'data.acfChildren') %}
+    {% set fieldsList = attr(acfChildren, 'fieldsList') %}
+    {% set hasDefinedTitle = strpos(fieldsList, '_title="true"') != false or strpos(fieldsList, 'title="true"') != false %} {# lets see if acf has defined title #}
+    {% set link_type = params.link_type ?? 'page' %}
+    {% set parent = attr(params, 'parent', attr(b, 'parent')) %}
+    {% set hasParentField = (
+                                attr(params, 'parent') == 'null'
+                                or
+                                attr(params, 'parent') == ''
+                            )
+                            and link_type != 'none' %}
+
+    <input type="hidden" name="parent" value="{{ parent }}">
+    <input type="hidden" name="link_type" value="{{ link_type }}">
+
+    {% if hasDefinedTitle == false %}
+        <div class="tile">
+            <header><h3 class="title">{{ link_type != 'none' ? 'Infos &amp; Réferencement' : 'Infos' }}</h3></header>
+            <div class="content">
+                <div class="row">
+
+                    <div class="col-md-{{ link_type != 'none' ? 8 : 12 }}">
+
+                        {% if hasParentField %}
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="gf-wrapper">
+                                        <select name="parent" class="gf-control form-control select2-basic gf-full" data-select-option="{{ attr(b, 'parent') }}">{{params.data.pages}}</select>
+                                        <div class="gf-label">Parent</div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                            <div class="row {{ hasParentField ? 'mg-top': '' }}">
+                                <div class="col-md-12">{{ gfInput(link_type != 'none' ? "Titre principal <em>(Sera affiché dans le menu)</em> *" : "Dénomination", 'title', attr(b, 'title'), 'required')|raw }}</div>
+                            </div>
+
+                        {% if link_type != 'none' %}
+                            <div class="row mg-top">
+                                <div class="col-md-12">{{ gfInput("Second titre <em>(Sera affiché dans l'onglet du navigateur)</em>", 'second_title', attr(b, 'second_title'), '')|raw }}</div>
+                            </div>
+                            <div class="row mg-top">
+                                <div class="col-md-4">{{ gfInput('URL personnalisée', 'customHref', attr(b, 'customHref'), '')|raw }}</div>
+                                <div class="col-md-4">{{ gfInput('Slug', 'slug', attr(b, 'slug'), '')|raw }}</div>
+                                <div class="col-md-4">{{ gfInput("Name", 'name', attr(b, 'name'), '')|raw }}</div>
+                            </div>
+                            <div class="row mg-top">
+                                <div class="col-md-6">{{ gfInput("Mots-clés", 'keywords', attr(b, 'keywords'), '')|raw }}</div>
+                                <div class="col-md-6" title="Ordre d'arrivé dans un menu">{{ gfInput("Rang", 'rank', attr(b, 'rank'), '')|raw }}</div>
+                            </div>
+                            <div class="row mg-top">
+                                <div class="col-md-12">
+                                    <div class="gf-wrapper">
+                                        <textarea name="description" class="gf-control form-control" rows="7" style="resize:none">{{attr(b, 'description')}}</textarea>
+                                        <div class="gf-label">Brève description</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if params.data.is  == 'update' %}
+                                <div class="row mg-top">
+                                    <div class="col-md-12">
+                                        <div class="gf-wrapper">
+                                            <a style="max-width:inherit;height:34px;line-height:45px;color:#2baea8" target="_blank" href="{{ getHref(b) }}?swagg" class="ellipsis lc1">Editer le corps de la page <strong><em>"{{ attr(b, 'title') }}"</em></strong></a>
+                                            <div class="gf-label" style="margin-top:-20px;margin-left:0;font-size:12px">Corps de la page</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    
+                    {% if link_type != 'none' %}
+                        <div class="col-md-4">
+                            {% if userCan('moderate', false) %}
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="pretty p-switch p-outline">
+                                            <input name="published" type="checkbox" {{ attr(b, 'published') == 'on' or attr(b, 'published') == '' ? 'checked' : ''}} />
+                                                <div class="state">
+                                                <label>Publier</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {% if link_type == 'page' %}
+                            <div class="row mg-top">
+                                <div class="col-md-12">
+                                    <div class="pretty p-switch p-outline">
+                                        <input
+                                            data-js="page={click:toggleNavStructures}"
+                                            name="in_menu"
+                                            type="checkbox"
+                                            value="{{ attr(b, 'in_menu') }}"
+                                            {{ attr(b, 'in_menu') == 'on' ? 'checked' : ''}}
+                                        />
+                                        <div class="state">
+                                            <label>Visible dans un menu</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="nav_structures" class="row mg-top" style="padding-left:40px;display:{{ attr(b, 'in_menu')=='on' ? 'block':'none' }}">
+                                <div class="col-md-12">
+                                    <div class="gf-wrapper">
+                                        <select class="gf-control form-control select2-basic gf-full" name="structure" data-select-option="{{ attr(b, 'structure') }}">
+                                            {{ params.data.navStructures }}
+                                        </select>
+                                        <div class="gf-label">Structure de navigation</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="row mg-top">
+                                <div class="col-md-12">
+                                    <div class="pretty p-switch p-outline">
+                                        <input name="allow_comments" type="checkbox" {{attr(b, 'allow_comments')=='on' or b is empty ? 'checked' : ''}} />
+                                            <div class="state">
+                                            <label>Activer les commentaires</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mg-top">
+                                <div class="col-xs-4">
+                                    <div class="field">
+                                        <label class="ellipsis lc1">Image d'avant-plan</span></label>
+                                        <div
+                                            data-fg data-fg-name="image"
+                                            data-fg-attachment="contain"
+                                            data-fg-src="{{ attr(b,'image','') }}"
+                                        ></div>
+                                        {# <input
+                                            name="image"
+                                            type="hidden"
+                                            value="{{ attr(b, 'image') }}"
+                                            data-js="sfmACF={click:fileControl__previewPicked}"
+                                            data-info='{{ {'_extension':'png', '_absPath':attr(b, 'image', '')}|json_encode }}'
+                                        >
+                                        <label class="ellipsis lc1">Image d'avant-plannn</span></label>
+                                        <div data-js="sfmACF={click:fileControl__getLibrary}" class="widget-preview-area is-empty">
+                                            <a data-js="sfmACF={click:fileControl__removeFile}" title="Retirer"><i class="fa fa-trash"></i></a>
+                                        </div> #}
+                                    </div>
+                                </div>
+                                <div class="col-xs-4">
+                                    <div class="field">
+                                        <label class="ellipsis lc1">Vidéo d'avant-plan</span></label>
+                                        <div
+                                            data-fg data-fg-name="video"
+                                            data-fg-attachment="contain"
+                                            data-fg-src="{{ attr(b,'video','') }}"
+                                        ></div>
+                                        {# <input
+                                            name="video"
+                                            type="hidden"
+                                            value="{{ attr(b, 'video') }}"
+                                            data-js="sfmACF={click:fileControl__previewPicked}"
+                                            data-info='{{ {'_extension':attr(b, 'video', '')|split('.')|last, '_extendedFilename':attr(b, 'video', '')}|json_encode }}'
+                                        >
+                                        <label class="ellipsis lc1">Vidéo d'avant-plan</span></label>
+                                        <div data-js="sfmACF={click:fileControl__getLibrary}" class="widget-preview-area is-empty">
+                                            <a data-js="sfmACF={click:fileControl__removeFile}" title="Retirer"><i class="fa fa-trash"></i></a>
+                                        </div> #}
+                                    </div>
+                                </div>
+                                <div class="col-xs-4">
+                                    <div class="field">
+                                        {% set icon = attr(b, 'icon') %}
+                                        <input
+                                            name="icon"
+                                            type="hidden"
+                                            value="{{ attr(b, 'icon') }}"
+                                            data-js="ACF={click:iconControl__previewPicked}"
+                                        >
+                                        <label class="ellipsis lc1">Icône</label>
+                                        <div data-js="ACF={click:iconControl__getLibrary}" class="widget-preview-area {{icon == '' ? 'is-empty' : ''}}">
+                                            {{ icon|raw }}
+                                            <a data-js="ACF={click:iconControl__removeIcon}" title="Retirer"><i class="fa fa-trash"></i></a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mg-top">
+                                <br>
+                                <div class="col-xs-6">
+                                    {{ gfInput('Création <em>(Il y a '~ getTimeAgo(attr(b, 'created_at', date())) ~ ')</em>', 'created_at', attr(b, 'created_at')|date('Y-m-d\\TH:i'), 'type="datetime-local" disabled')|raw }}
+                                </div>
+                                <div class="col-xs-6">
+                                    {{ gfInput('Mise à jour <em>(Il y a '~ getTimeAgo(attr(b, 'updated_at', date())) ~ ')</em>', 'updated_at', attr(b, 'updated_at')|date('Y-m-d\\TH:i'), 'type="datetime-local" disabled')|raw }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if link_type == 'page' %}
+
+        {% set layout = attr(acfChildren, 'layout') %}
+
+        {% if acfChildren != null and layout not in ['', 'customized'] %}
+            <input type="hidden" name="layout" value="{{ layout }}">
+        {% else %}
+        
+            <div class="cell-container">
+                <div class="cell cell-50">
+                    <div class="tile">
+                        <header><h3 class="title">Layout</h3></header>
+                        <div class="content">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="gf-wrapper">
+                                        <select name="layout" class="gf-control form-control select2-basic gf-full" data-select-option="{{ attr(b, 'layout') }}">{{params.data.layouts}}</select>
+                                        <div class="gf-label">Sélectionner un Layout</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% if layout != 'customized' %}
+                <div class="cell cell-50">
+                    <div class="tile">
+                        <header><h3 class="title">Single</h3></header>
+                        <div class="content">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="gf-wrapper">
+                                        <select name="layout_single" class="gf-control form-control select2-basic gf-full" data-select-option="{{ attr(b, 'layout_single') }}">{{params.data.layouts}}</select>
+                                        <div class="gf-label">Sélectionner le layout de la vue Single</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="tile">
+                <header><h3 class="title">EXTRAS</h3></header>
+                <div class="content">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="gf-wrapper">
+                                <textarea name="extra_data" class="gf-control form-control" rows="5">{{attr(b, 'extra_data')}}</textarea>
+                                <div class="gf-label">Paramètres supplémentaires</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        {% endif %}
+
+    {% endif %}
+
+    <script>
+        AddScript(function(){
+            'use strict';
+
+            __.dataJs({
+                page: {
+                    toggleNavStructures: function($t){
+                        $('#nav_structures')[ $t[0].checked == true ? 'show' : 'hide' ]();
+                        /**/
+                        $t.val($t[0].checked?'on':'off');
+                        $t[0].checked ? $t.attr('checked','checked'):$t.removeAttr('checked');
+                    }
+                }
+            })
+        })
+    </script>
+
+{% endmacro %}
+
+{% macro getCSS() %}
+    <style>
+        html .pending{transition:all .5s ease}html .pending::after,html .pending::before{transition:all .5s ease}html .pending.pending-transparent::after{box-shadow:0 0 20px 15px rgba(43,174,168,.67)}html body:not(.pender__scaledless).pending.pending-transparent::after{transform:scale(.3) translateY(-65px)}html body:not(.pender__scaledless).pending::before{transform:scale(.3)}html body:not(.preloading) .preloader-wrapper{opacity:0;z-index:-9999}html.html-loaded main{transition:all .5s ease}.is__transitioning{opacity:.5!important}.preloader-wrapper{transition:all .3s ease;position:fixed;top:0;bottom:0;width:100%;height:100%;right:0;z-index:99999;text-align:center;background-color:#fff}.preloader-wrapper .preloader{position:absolute;top:50%;transform:translateY(-50%);left:0;right:0;margin:auto}.preloader-wrapper .preloader img{max-width:100%;display:block;margin:50px auto}html body .preloader-wrapper{background:#fff}
+        body{font-family:Kodchasan;height:100vh}body::-webkit-scrollbar-track{-webkit-box-shadow:inset 0 0 6px rgba(0,0,0,.3);border-radius:0;background-color:#f5f5f5}body::-webkit-scrollbar{width:10px;height:12px;background-color:#f5f5f5}body::-webkit-scrollbar-thumb{border-radius:0;-webkit-box-shadow:inset 0 0 6px rgba(0,0,0,.3);background-color:#85a5d4}body .pagination{display:flex}body.aside-is-pinned .aside{left:-280px}body.aside-is-pinned main{width:100%;right:0;margin:auto;left:0}body.aside-is-pinned header .closer,body:not(.aside-is-pinned) header .bars{display:none}.scroller-inner{height:100%;overflow:auto}h1,h2,h3,h4,h5,h6{font-family:Dosis}*{margin:0;padding:0}.ellipsis{overflow:hidden;text-overflow:ellipsis;-webkit-box-orient:vertical;display:-webkit-box}.ellipsis.lc1{-webkit-line-clamp:1}.ellipsis.lc2{-webkit-line-clamp:2}.fa,.fas{text-shadow:none}.bg-success{background:#4caf50}.bg-danger{background:#d60f00}.main-header{height:56px;line-height:56px;box-shadow:11px 0 10px 0 rgba(0,0,0,.19);padding:0 30px;position:fixed;z-index:12;width:100%;display:flex;align-items:center}.main-header .left button{height:36px;width:45px;float:left;font-size:33px;line-height:0;margin-right:15px;border:0;color:#fff;background:0;border:1px solid}.main-header .title{color:#fff}.main-header .title img{height:36px;border:1px solid #fff;padding:1px;margin-right:15px;float:left}.aside{transition:all .3s ease;position:fixed;z-index:11;left:0;width:280px;height:calc(100vh - 56px);top:56px;overflow:auto}.aside a{text-decoration:none;font-size:15px;height:50px;line-height:53px;display:block;padding:0 30px;padding-left:72px;position:relative}.aside .icon{position:absolute;left:26px;border-radius:100%;width:38px;height:38px;line-height:32px;text-align:center;top:7px;border:2px solid}.aside .icon svg{position:absolute;font-size:19px;top:50%;left:50%;transform:translate(-50%,-50%)!important}.aside .icon .fa{font-size:15px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)!important}.aside .liner{padding:10px 0}.aside .liner:not(:first-child){border-top:1px solid #eee}.aside .liner.icon-sm a{font-size:13px;height:35px;line-height:35px;padding-left:60px}.aside .liner.icon-sm .icon{top:3px;font-size:16px;width:30px;height:30px}.aside .liner.icon-sm .fa{font-size:12px}.aside .liner.icon-sm .content{padding-left:40px;padding-top:5px}.aside .liner-label{padding-left:30px}.aside .liner-label i{font-size:23px!important;margin:0 5px}main{position:fixed;top:60px;width:calc(100% - 280px - 30px);right:0}main .header{padding:10px 5px;display:flex;align-items:center}main .header .title{font-size:30px;margin:0}main .header a{position:relative;top:2px}main .header .button{font-size:19px;width:30px;height:30px;text-align:center;border-radius:100%}main .header .button.btn-backward{margin-right:10px}main .header .button.btn-forward,main .header .button.btn-reload{margin-left:10px}main .header .button svg{position:relative;top:5px}main .header .btn-add{margin-left:15px;white-space:nowrap}main .header .btn-add i{padding-right:5px}main .main-content{margin-top:10px;overflow:auto;height:calc(100vh - 175px)}main .main-content .scroller-inner{padding-bottom:30px}main a,main table .ellipsis{max-width:25vw;overflow:hidden;display:block;text-overflow:ellipsis}.tiles{display:table;width:100%;margin-top:-15px}.tile{box-shadow:0 1px 1px 1px rgba(204,204,204,.47);border:0;border-radius:3px;margin-left:5px;margin-right:5px;margin-top:15px}.tile>header{border-bottom:1px solid #eee;padding-bottom:20px}.tile>header .title{text-transform:uppercase;text-shadow:1px 1px 1px #fff;font-size:25px;margin:0}.tile .mg-top{margin-top:25px}.tile:not(.tile-table){padding:20px}.tile:not(.tile-table) .content{position:relative;margin-top:30px}.tile.tile-table{padding:20px 20px 0}.tile .content{position:relative}.tile .content>.row>[class^=" col-"],.tile .content>.row>[class^=col-]{border-left:5px solid rgba(43,174,168,.23)}form [type=submit]{text-transform:uppercase}form .submit-wrapper{position:fixed;z-index:10;box-shadow:11px 0 10px 0 rgba(0,0,0,.19);bottom:0;left:0;right:0;text-align:right;padding:10px 30px}form .err-msg{font-size:.8rem!important;padding:5px 0;margin:-7px 0;position:absolute;color:#e00000}form .form-control:focus{box-shadow:0 0 0 .25rem rgba(43,174,168,.31)}.tile-acf .row>*{margin-bottom:35px}.tiles-tab{position:sticky;margin-top:10px;top:-17px;z-index:1}.tiles-tab a{display:inline-block;font-size:12px;margin-right:10px}.tiles-tab a:not(.active){color:#000}.field-bloggy-checkbox .gf-wrapper,.field-bloggy-radio .gf-wrapper{padding-top:30px}.field-bloggy-checkbox .gf-label,.field-bloggy-radio .gf-label{top:12px!important;left:-13px!important}table thead{text-transform:uppercase}table th{font-size:.8em}table .badge{text-shadow:none}.select2-container{margin:5px 0;width:100%!important}.select2-container--default .select2-selection--single,.select2-container--default.select2-container--focus .select2-selection--multiple,.select2-dropdown{border-color:1px solid transparent}.select2-container--default .select2-selection--multiple .select2-selection__choice{border:1px solid transparent}.select2-container--default .select2-selection--multiple{border:1px solid transparent}.select2-container~label::after{display:none}@media screen and (max-width:1200px){.main-header{padding:0 5px}.main-header .left button{display:inline-block!important}.main-header .left .title{position:relative;top:2px}.tile{border-radius:0}}@media screen and (min-width:992px){.main-header .left{width:220px}}@media screen and (min-width:768px){.main-header .right{margin-left:30px;min-width:500px}}@media screen and (max-width:992px){.mg-top{margin-top:10px!important}.row>*{margin-top:25px}}body.theme-lite{background-color:#eee}body.theme-lite .main-header{background-color:#2baea8}body.theme-lite .gf-wrapper{position:relative;width:100%}body.theme-lite .gf-label{transition:all .3s ease;position:absolute;top:50%;transform:translateY(-50%);left:0;margin-left:13px;color:#7d7d7d}body.theme-lite .gf-control.gf-full *~.gf-label,body.theme-lite .gf-control.gf-full~.gf-label,body.theme-lite .gf-control:focus *~.gf-label,body.theme-lite .gf-control:focus~.gf-label{top:0;background-color:#fff;padding:0 5px;font-size:.85em;margin-top:-1px;margin-left:16px}body.theme-lite .gf-control:focus~.gf-label{color:#2baea8!important}body.theme-lite .scroller-inner::-webkit-scrollbar-track{-webkit-box-shadow:inset 0 0 6px rgba(0,0,0,.3);border-radius:0;background-color:#f5f5f5}body.theme-lite .scroller-inner::-webkit-scrollbar{width:10px;height:12px;background-color:#f5f5f5}body.theme-lite .scroller-inner::-webkit-scrollbar-thumb{border-radius:0;-webkit-box-shadow:inset 0 0 6px rgba(0,0,0,.3);background-color:#2baea8}body.theme-lite .scroller-inner.radius-8::-webkit-scrollbar-track{-webkit-box-shadow:inset 0 0 6px rgba(0,0,0,.3);border-radius:8px;background-color:#f5f5f5}body.theme-lite .scroller-inner.radius-8::-webkit-scrollbar{width:10px;height:12px;background-color:#f5f5f5}body.theme-lite .scroller-inner.radius-8::-webkit-scrollbar-thumb{border-radius:8px;-webkit-box-shadow:inset 0 0 6px rgba(0,0,0,.3);background-color:#2baea8}body.theme-lite .aside{background-color:#fff}body.theme-lite .aside a{color:rgba(0,0,0,.6)}body.theme-lite .aside a:hover{color:#000}body.theme-lite .aside a.active{background-color:#93d6d3;color:#000}body.theme-lite .aside .icon{color:#fff;border-color:#fff}body.theme-lite .aside .liner-label{color:#000}body.theme-lite main .header .button{color:#000}body.theme-lite main .header .button:not(:hover){background-color:#e7e7e7}body.theme-lite main .header .button:hover{background-color:#ccc}body.theme-lite .tile{background-color:#fff}body.theme-lite .tile .title{color:#2baea8}body.theme-lite .tile .content>.row>[class^=" col-"]:hover,body.theme-lite .tile .content>.row>[class^=col-]:hover{background-color:rgba(43,174,168,.03);border-left-color:#2baea8}body.theme-lite .tiles-tab a.active{color:#2baea8}body.theme-lite form .submit-wrapper{background-color:#fff}body.theme-lite form .form-control:focus{border-color:#2baea8}body.theme-lite table thead{color:rgba(0,0,0,.54)}body.theme-lite .pretty input:checked~.state::before{border-color:#2baea8!important}body.theme-lite .pretty input:checked~.state label{color:#2baea8}body.theme-lite .pretty input:checked~.state label::before{border-color:#2baea8!important}body.theme-lite .pretty input:checked~.state label::after{background-color:#2baea8!important}body.theme-lite .select2-container--default .select2-selection--single,body.theme-lite .select2-container--default.select2-container--focus .select2-selection--multiple,body.theme-lite .select2-dropdown{border-color:#2baea8}body.theme-lite .select2-container--default .select2-results__option[aria-selected=true]{background-color:rgba(43,174,168,.5)}body.theme-lite .select2-container--default .select2-selection--multiple .select2-selection__choice{background-color:rgba(43,174,168,.16);border-color:#2baea8}body.theme-lite .select2-container--default .select2-selection--multiple{border-color:#2baea8}body{font-family:Kodchasan}body::-webkit-scrollbar-track{-webkit-box-shadow:inset 0 0 6px rgba(0,0,0,.3);border-radius:0;background-color:#f5f5f5}body::-webkit-scrollbar{width:10px;height:12px;background-color:#f5f5f5}body::-webkit-scrollbar-thumb{border-radius:0;-webkit-box-shadow:inset 0 0 6px rgba(0,0,0,.3);background-color:#85a5d4}body .pagination{display:flex}body.aside-is-pinned .aside{left:-280px}body.aside-is-pinned main{width:100%;right:0;margin:auto;left:0}body.aside-is-pinned header .closer,body:not(.aside-is-pinned) header .bars{display:none}
+
+        body .fgw { border:1px solid #ccc; border-style: solid!important; border-radius: 0; }
+        body .fgw:not(.fg--full) .fgt:not(:hover) { background-color: #d5dadf }
+        body .fgw:not(.fg--full) .fgt:hover { background-color: #bfbfbf }
+        body .fgw .fgt { height: 100px; max-height: 100px; min-height: 100px; border-radius:0 }
+    </style>
+{% endmacro %}
+
+{% macro loadMore(arg) %}
+    <div class="dp-table mg-auto text-center">
+        {% if arg.knpPaginator.getPaginationData().next is defined %}
+            <a data-loadmore-btn="loadmore__btn" class="data-loadmore-btn btn bttn btn-primary btn-p">Charger plus {{ (arg.arrow ?? '↓')|raw }}</a>
+        {% endif %}
+        {% set knpStructure = knp_pagination_render(arg.knpPaginator, getKnpTplPath()) %}
+        <div data-loadmore-pagination class="data-loadmore-pagination hidden_">{{ knpStructure|raw }}</div>
+    </div>
+    <style>.data-loadmore-pagination nav { display: table; margin: auto }</style>
+    <script>
+        AddScript(function(){
+            __.debounce('loadMore', 500, function(){
+                LoadMore.init({
+                    onUpdated: function(){
+                        LazyLoading.scanDOM();
+                    }
+                });
+            });
+        });
+    </script>
+{% endmacro %}

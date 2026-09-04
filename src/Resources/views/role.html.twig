@@ -1,0 +1,103 @@
+{% extends '@DovStoneSymfonyBlogAdminBundleMoSQLBased/base.html.twig' %}
+
+{% import '@DovStoneSymfonyBlogAdminBundleMoSQLBased/partials/macros.html.twig' as bundleMacros %}
+
+{% block title %}{{ data.title }}{% endblock %}
+    {% block btnAdd %}
+        {% if data.is == 'list' and userCan('edit', false) %}
+            <a href="{{ data.btnAdd|raw }}" class="btn-add btn btn-primary btn-sm"><i class="fa fa-plus"></i>Ajouter</a>
+        {% endif %}
+    {% endblock %}
+{% block main %}
+
+    {% if data.is == 'list' %}
+
+        {% if data.bloggies is empty %}
+            {{ getBundleEmptyListView() }}
+        {% else %}
+        
+            <div class="tiles">
+                <div class="tile tile-table">
+                    <div class="content">
+                        <div class="table-responsive">
+
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th data-minmax="20" class="text-center">N°</th>
+                                        <th data-minmax="100" class="text-center">Actions</th>
+                                        <th>Désignation</th>
+                                        <th data-minmax="135" class="text-center">Création</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for r in data.bloggies %}
+                                        <tr>
+                                            <td class="text-center" data-indexify="0"></td>
+                                            <td class="text-center">
+                                                {% if attr(r, 'slug') != 'master-admin' %}
+                                                    <div class="table-actions cell-container">
+                                                        <div class="cell">
+                                                            <a data-csrf-token="{{ csrfToken(false) }}" data-undoable="{{ path('_deleteBloggy', {'id': attr(r, 'id')}) }}" data-undoable-parent="tr" title="Supprimer" class="btn btn-xs btn-danger">
+                                                                <i class="fa fa-trash"></i>
+                                                            </a>
+                                                        </div>
+                                                        <div class="cell">
+                                                            <a href="{{ path('_updateBloggy', {'type': 'role', 'id': attr(r, 'id')}) }}" title="Modifier" class="btn btn-xs btn-info">
+                                                                <i class="fa fa-pencil"></i>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ attr(r, 'title')|upper }}</td>
+                                            <td class="text-center">{{ attr(r, 'created_at')|date("d/m/Y à H:i") }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+
+                            </table>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{ bundleMacros.loadMore({ 'knpPaginator': data.knpPaginator }) }}
+
+        {% endif %}
+
+    {% else %}
+    
+        <form action="{{data.formAction}}" method="post">
+            {{ csrfToken() }}
+            {% set r = data.bloggy ?? [] %}
+            <div class="tiles">
+                <div class="tile">
+                    <header><h3 class="title">Infos du Rôle</h3></header>
+                    <div class="content">
+                        <div class="row">
+                            <div class="col-lg-12">{{ gfInput("Désignation du rôle</em>", 'title', attr(r, 'title'), 'required')|raw }}</div>
+                        </div>
+                        <div class="row mg-top">
+                            <div class="col-lg-12">{{ gfInput("Valeur</em>", 'slug', attr(r, 'slug'), 'required')|raw }}</div>
+                        </div>
+                        <div class="row mg-top">
+                            <div class="col-md-12">
+                                <div class="gf-wrapper">
+                                    <textarea name="description" class="gf-control form-control" rows="3">{{attr(r, 'description', 'Ajoute, Modifie, Supprime ses propres données')}}</textarea>
+                                    <div class="gf-label">Description</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <footer class="submit-wrapper">
+                <button class="btn btn-danger" type="submit">Enregistrer</button>    
+            </footer>
+        </form>
+
+    {% endif %}
+
+{% endblock %}

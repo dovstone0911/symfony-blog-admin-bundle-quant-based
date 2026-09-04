@@ -1,0 +1,46 @@
+<div class="tiles">
+    <div class="tile">
+        <header><h3 class="title">Recherche</h3></header>
+        <div class="content">
+            <form action="{{ getCurrentUrlQueryLess() }}" data-js="Search={submit:handleSubmit}" method="get">
+                {{ gfInput('Rechercher', 'q', app.request.get('q'), 'type="search" required data-js="Search={search|paste|keyup|keypress:submitForm}"')|raw }}
+            </form>
+        </div>
+    </div>
+</div><br>
+
+<script>
+    AddScript(function(){
+
+        var $view = $('[data-loadmore-view]');
+
+        __.dataJs({
+            Search: {
+                submitForm: function($t){
+                    $t.parents('form').trigger('submit');
+                },
+                handleSubmit: function($form){
+
+                    $view.addClass('pending pending-focus');
+
+                    __.debounce('handleSubmit', 1000, function(){
+                        var query = $form.serialize(),
+                            url = $form.attr('action') + '?' + query;
+                            //
+                            Ajaxify.pushState(url);
+                            $.ajax({
+                                url: url,
+                                success: function(dom){
+                                    ReplaceNode.init(dom, $view.selector);
+                                },
+                                complete: function(){
+                                    $view.removeClass('pending pending-focus')
+                                }
+                            })
+                            
+                    })
+                }
+            }
+        })
+    })
+</script>

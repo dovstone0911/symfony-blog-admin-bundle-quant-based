@@ -1,0 +1,223 @@
+<script defer src="{{ getCDN('swagg/sleekdb-based/uploader.js?v=' ~ random()) }}" type="text/javascript"></script>
+
+<style>
+    .empty-files{width:80%;margin:50px auto}.attachment--header{background-color:#fff;border-bottom:1px solid #e0e0e0}.attachment--filter{position:fixed;padding:10px;background-color:#fff;z-index:1;box-shadow:0 0 8px rgba(0,0,0,.1);width:calc(100% - 300px);margin:-50px -15px}.attachment--filter input,.attachment--filter select{border:1px solid #ccc;border-radius:5px;height:30px;font-size:12px;padding:5px 7px;box-shadow:inset 0 0 4px 0 #d4d4d4}.attachment--header a{display:inline-block;cursor:pointer;padding:9px;text-decoration:none;font-size:12px;margin-bottom:-1px;border:1px solid transparent}.attachment--header a.active{border-color:#e0e0e0;background-color:#f0f2f4;border-bottom-color:#f0f2f4;color:#444}.attachment--body{position:absolute;left:0;right:0;height:calc(100% - 135px);overflow-x:hidden;overflow-y:auto}.attachment--tab:not(.active){display:none}.attachment--tab.televerse{position:absolute;top:30%;left:50%;transform:translateX(-50%) translateY(-30%)}.attachment--settings{margin-top:30px}.attachment--settings label{display:table;margin:5px auto 0 auto}.attachment--settings label b{font-weight:400!important;font-size:12px}.attachment--tab.televerse a{font-size:14px;padding:15px 36px;color:#555;border-color:#ccc;background:#f7f7f7;box-shadow:0 1px 0 #ccc;vertical-align:top;display:inline-block;text-decoration:none;cursor:pointer;margin-bottom:20px}.attachment--tab.list .list-container{position:absolute;left:0;top:50px;width:calc(100% - 300px);bottom:0;overflow-x:hidden;overflow-y:auto;padding:0 15px}.attachment--tab.list .list-container ul{list-style:none}.attachment--tab.list .list-container li>div{position:relative;box-shadow:inset 0 0 15px rgba(0,0,0,.1),inset 0 0 0 1px rgba(0,0,0,.05);background:#eee;padding:8px;height:140px;margin:10px 0;text-align:center}.attachment--tab.list .list-container ul.pickable li>div{cursor:pointer}.attachment--tab.list .list-container li.selected>div{box-shadow:inset 0 0 0 3px #fff,inset 0 0 0 7px #0073aa}.attachment--tab.list .list-container .progress{position:relative;border-radius:30px;top:45px}.attachment--tab.list .list-container .progress>div{background-color:#2baea8;background-color:#2baea8;position:absolute;left:0;height:100%}.attachment--tab.list .list-container img{max-width:90%;max-height:90%}.attachment--tab.list .attachment--details{position:absolute;right:0;top:0;width:300px;bottom:0;overflow-x:hidden;overflow-y:auto;padding:0 15px;background-color:#fff;text-align:center}.attachment--details .title{position:relative;font-weight:600;text-transform:uppercase;font-size:12px;color:#666;margin:24px 0 8px}.attachment-info .thumbnail{display:inline-block}.attachment-info .thumbnail img{display:block;max-width:120px;max-height:120px;margin:0 auto}.attachment-info .filename{font-weight:600;color:#444;word-wrap:break-word}.delete-attachment{color:#bc0b0b;cursor:pointer;margin:5px 0;font-size:13px}
+</style>
+
+<div id="bundle__attachment">
+    <header class="attachment--header">
+        <a data-js="bundleMedia={click:toggleTab}" data-target="televerse">Téléverser des fichiers</a>
+        <a data-js="bundleMedia={click:toggleTab}" class="active" data-target="list">Bibliothèque de médias</a>
+    </header>
+
+    <div class="attachment--body">
+
+        <div data-tab="televerse" class="attachment--tab televerse">
+
+            <form id="media_form" action="{{ path('_uploadMedia') }}" method="post" enctype="multipart/form-data">
+            
+                <input type="hidden" name="parent">
+                <input type="hidden" name="second_title">
+                <input type="hidden" name="description">
+                <input type="hidden" name="slug">
+                <input type="hidden" name="keywords">
+                <input type="hidden" name="name">
+                <input type="hidden" name="link_type">
+                <input type="hidden" name="layout">
+                <input type="hidden" name="in_menu">
+                <input type="hidden" name="image">
+                <input type="hidden" name="published">
+                <input type="hidden" name="allow_comments">
+                <input type="hidden" name="sections">
+                <input type="hidden" name="html">
+                <input type="hidden" name="user">
+
+                
+                <div class="text-center">
+                    <input data-js="bundleMedia={change:previewUploading}" id="attachment__input" type="file" multiple name="file" class="hidden">
+                    <a class="btn" onclick=" $('#attachment__input').trigger('click'); ">Sélectionnez des fichiers</a>
+                    <p>Taille de fichier maximale pour le téléversement : 8 MB.</p>
+                </div>
+                
+                <div class="attachment--settings">
+                    <label class="switch">
+                        <input type="checkbox" name="gen_thumbnails" data-js="bundleMedia={click:toggleCrop}">
+                        <b>Générer les miniatures (900x420 - 300x216 - 150x133)</b>
+                    </label>
+                    <label class="switch">
+                        <input id="crop" type="checkbox" name="crop" disabled>
+                        <b>Rogner les miniatures (Seule la région centrale sera prise en compte)</b>
+                    </label>
+                </div>
+
+            </form>
+        </div>
+        <div data-tab="list" class="attachment--tab list active">
+
+            <div class="list-container unselectable">
+                <header class="attachment--filter">
+                    <div class="cell-container">
+                        <div class="cell">
+                            <input class="form-control input-sm" type="text" placeholder="Rechercher des médias..." data-js="fileBrowserCore={keyup|keypress|paste:filterFiles}"
+                            />
+                        </div>
+                        <div class="cell cell-spacer"></div>
+                        <div class="cell cell-30">
+                            <select class="form-control input-sm" data-js="fileBrowserCore={change:filterFiles}" data-onpageloaded="change">
+                                <option disabled>Type de fichier</option>
+                                <option></option>
+                                <option value="" selected>Tous les fichiers</option>
+                                <option></option>
+                                <option value="--img-original--">Image (Originale)</option>
+                                <option value="150x133">Image (Petite - 150 x 133)</option>
+                                <option value="300x216">Image (Moyenne - 300 x 216)</option>
+                                <option value="900x420">Image (Grande - 900 x 420)</option>
+                                <option></option>
+                                <option value="pdf">PDF</option>
+                            </select>
+                        </div>
+                    </div>
+                </header>
+                <ul id="attachment__ul_list" class="row">
+                    {% for file in data.items %}
+
+                        {% set isImage = attr(file, 'type') in ['image', 'file--jpg', 'file--jpeg', 'file--png', 'file--gif'] %}
+
+                        <li data-is-image="{{ isImage == true ? 'true' : 'false' }}" class="col-xs-6 col-md-4 col-lg-2" data-info="{{ file|json_encode() }}" data-native-info='{"id":"{{attr(file, 'id')}}","created":"{{ getFrenchDate(attr(file, 'created_at'), 'D/d/M/Y') }}"}' data-js="fileBrowserCore={click:selectThis}">
+                            <div>
+
+                                {% if attr(file, 'type') in ['image', 'file--jpg', 'file--jpeg', 'file--png', 'file--gif']  %}
+
+                                    <img class="vam" src="{{ attr(file, '_absoluteUrl') }}" />
+                                    {% if attr(file, '_x') in [150,300,900] or attr(file, '_y') in [133,216,420] %}
+                                        <span class="hidden">{{ attr(file, '_x') ~'x'~ attr(file, '_y') }}</span>
+                                        <span class="hidden">{{ attr(file, '_filename') }}</span>
+                                    {% else %}
+                                        <span class="hidden">--img-original--</span>
+                                    {% endif %}
+
+                                {% else %}
+                                
+                                    <span class="hidden">{{ attr(file, '_filename') }}</span>
+                                    <span class="hidden">{{ attr(file, '_extension') }}</span>
+                                    <img class="vam" src="{{ getCDN('swagg/assets/img/preview-'~ attr(file, '_extension')) }}.jpg" />
+
+                                {% endif %}
+
+                            </div>
+                        </li>
+                    {% else %}
+                        <div class="empty-files">{{ getBundleEmptyListView() }}</div>
+                    {% endfor %}
+                </ul>
+                
+                <div class="dp-table mg-auto">
+                    {{ knp_pagination_render(data.items, getKnpTplPath()) }}
+                </div>
+
+            </div>
+            <aside class="attachment--details"></aside>
+
+        </div>
+    </div>
+</div>
+
+<script>
+$(function(){
+
+    "use strict";
+
+    $('#bundle__attachment .pagination .page-link').attr('data-js', 'bundleMedia={click:pageLink}');
+    
+    var $bundle__attachment = $('#bundle__attachment'),
+        $attachment_body = $bundle__attachment.find('.attachment--body');
+
+    __.dataJs({
+        bundleMedia: {
+            previewUploading: function ($inputFile) {
+
+                $('[data-js="bundleMedia={click:toggleTab}"][data-target="list"]').trigger('click');
+
+                Uploader.init({
+                    $input: $inputFile,
+                    onProgressing: function (percentComplete, beforeProcessReturn, i) {
+                        
+                        __.elementExistsAlias({
+                            el: $attachment__ul_list.find('.index-' + i),
+                            onNotExists: function(){
+                                $attachment__ul_list.prepend(`<li class="col-xs-6 col-md-4 col-lg-2 index-` + i + `">
+                                    <div>
+                                        <img class="img-${i} vam" />
+                                        <div class="progress">
+                                            <div style="width:`+ percentComplete + `%"></div>
+                                        </div>
+                                    </div>
+                                </li>`).find('.empty-files').hide();
+                            },
+                            onExists: function($el){
+                                $el.find('.progress>div').css('width', percentComplete+'%');
+                            }
+                        })
+
+                        //FileBrowserParams.onUpload.onProgressing(percentComplete, beforeProcessReturn, i);
+                    },
+                    onSuccess: function (beforeProcessReturn, r, i) {
+
+                        var extension = r.data._extension,
+                            $el = $('#attachment__ul_list .index-' + i);
+                            //
+                            $el.attr({
+                                'data-js': 'fileBrowserCore={click:selectThis}',
+                                'data-info': JSON.stringify(r.data),
+                                'data-native-info': '{"id":"' + r.data.id + '","created":"' + r.data.created_at + '"}'
+                            })
+                            .find('img.img-' + i).attr( 'src', (extension == 'jpg' ? r.data._absoluteUrl : __.getCDN('swagg/assets/img/preview-'+extension+'.jpg')) ).end()
+                            .find('.progress').remove()
+                            ;
+                        if( extension == 'jpg' ){
+                            $el.attr('data-is-image', 'true');
+                        }
+                        __.rebindDataJs();
+
+                        //FileBrowserParams.onUpload.onSuccess(beforeProcessReturn, r, i);
+                    },
+                    onEnd: function(){
+                        ACF.initFileBrowser(); // created from cdn/swagg/sleekdb-based/acf.js
+                    },
+                    onNotAllowed: function (format, beforeProcessReturn) { alert('Format ' + format + ' non pris en charge'); },
+                })
+            },
+            toggleTab: function ($trigger) {
+
+                $trigger.addClass('active').parents('.attachment--header').find('a').not($trigger).removeClass('active');
+                $attachment_body
+                    .find('.attachment--tab').removeClass('active').end()
+                    .find('[data-tab="' + $trigger.attr('data-target') + '"]').addClass('active');
+            },
+            toggleCrop: function($t){
+                
+                var $crop = $('#crop');
+                $t[0].checked
+                ? $crop.removeAttr('disabled').parents('label').removeClass('is-disabled')
+                : $crop.attr('disabled', 'disabled').parents('label').addClass('is-disabled');
+            },
+            pageLink: function($t){
+                var href = $t.attr('href');
+                if(href){
+                    $.ajax({
+                        url: href,
+                        beforeSend: function(){
+                            $('.attachment--body .list-container').addClass('pending pending-focus');
+                        },
+                        success: function(view){
+                            $('#filebrowser__modal_bundleFilesBrowser .filesbrowser--modal--body').html(view);
+                            ACF.initFileBrowser(); // created from cdn/swagg/sleekdb-based/acf.js
+                        }
+                    })  
+                }
+            }
+        }
+    });
+
+})
+</script>

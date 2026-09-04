@@ -1,0 +1,106 @@
+{% extends '@DovStoneSymfonyBlogAdminBundleMoSQLBased/base.html.twig' %}
+
+{% block title %}Paramètres{% endblock %}
+{% block main %}
+
+<div class="tiles">
+    <div class="col-md-12">
+        <div class="tile">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <span class="icon">{{ i('fa-solid:sort-numeric-up') }}</span>
+                            <span>Compteur de visites</span>
+                        </div>
+                        <div class="ml-1"><button data-csrf-token="{{ csrfToken(false) }}" data-endpoint="{{ path('_resetVisitsCounters') }}" data-js="Settings={click:endpoint}" class="btn btn-danger btn-sm">Remettre à zéro</button></div>
+                    </div>
+                </div>
+                <div class="col-md-12 mt-3">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <span class="icon">{{ i('ic:baseline-remove-red-eye') }}</span>
+                            <span>Compteur de vues</span>
+                        </div>
+                        <div class="ml-1"><button data-csrf-token="{{ csrfToken(false) }}" data-endpoint="{{ path('_resetHits') }}" data-js="Settings={click:endpoint}" class="btn btn-danger btn-sm">Remettre à zéro</button></div>
+                    </div>
+                </div>
+                <div class="col-md-12 mt-3">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <span class="icon">{{ i('octicon:cache-16') }}</span>
+                            <span>Cache du site</span>
+                        </div>
+                        <div class="ml-1"><button data-csrf-token="{{ csrfToken(false) }}" data-endpoint="{{ path('_resetCache') }}" data-js="Settings={click:endpoint}" class="btn btn-danger btn-sm">Supprimer le cache</button></div>
+                    </div>
+                </div>
+                <div class="col-md-12 mt-3">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <span class="icon">{{ i('bi:watch') }}</span>
+                            <span>Durée de vie du cache</span>
+                        </div>
+                        <div class="ml-1">
+                            <select data-select-option="{{ attr(b().findOneBy([['type','=','setting--ttl']]).fetch(), 'ttl') }}" data-csrf-token="{{ csrfToken(false) }}" data-endpoint="{{ path('_setTTL') }}" class="form-control input-sm" data-js="Settings={change:handleTTL}">
+                                <option value="1">0 (Aucune)</option>
+                                <option value="" disabled>-</option>
+                                <option value="{{ 3600 * 1 }}">01 h</option>
+                                <option value="{{ 3600 * 6 }}">06 h</option>
+                                <option value="{{ 3600 * 12 }}">12 h</option>
+                                <option value="" disabled>-</option>
+                                <option value="{{ 3600 * 24 }}">01 jr</option>
+                                <option value="{{ 3600 * 24 * 3 }}">03 jrs</option>
+                                <option value="{{ 3600 * 24 * 7 }}">07 jrs</option>
+                                <option value="{{ 3600 * 24 * 30 }}">30 jrs</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .d-flex { display: flex }
+    .align-items-center { align-items: center }
+    .ml-1 { margin-left: 1rem }
+    .mt-3 { margin-top: 3rem }
+    .tiles .icon { background-color: red; border-radius: 6px; margin-right: 1rem;
+        width: 25px; display: inline-block; height: 25px; line-height: 25px; text-align: center; font-size: 19px; color: #fff }
+    .tiles .icon svg { position: relative; top: 3px }
+</style>
+
+<script>AddScript(function(){
+    'use script';
+    __.dataJs({
+        Settings: {
+            endpoint: function($t){
+                $.ajax({
+                    url: $t.data('endpoint'),
+                    type:'post',
+                    data:{_token: $t.data('csrf-token')},
+                    beforeSend:function(){Ajaxify.setDefaultPending();},
+                    success: function(res){
+                        BackOffice.showSnackbarMessage(res.msg);
+                    },
+                    complete:function(){Ajaxify.unsetPendingState();}
+                });
+            },
+            handleTTL: function($t){
+                $.ajax({
+                    url: $t.data('endpoint'),
+                    type:'post',
+                    data:{_token: $t.data('csrf-token'),ttl:$t.val()},
+                    beforeSend:function(){Ajaxify.setDefaultPending();},
+                    success: function(res){
+                        BackOffice.showSnackbarMessage(res.msg);
+                    },
+                    complete:function(){Ajaxify.unsetPendingState();}
+                });
+            }
+        }
+    });
+})</script>
+
+{% endblock %}

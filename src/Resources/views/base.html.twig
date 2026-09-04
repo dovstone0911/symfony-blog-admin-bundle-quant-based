@@ -1,0 +1,58 @@
+{% import '@DovStoneSymfonyBlogAdminBundleMoSQLBased/partials/macros.html.twig' as bundleMacros %}
+<!DOCTYPE html>
+<html lang="fr" data-app-config='{{ getAppConfig() }}'>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+        <title>{{ block('title') }} • {{getAppEnv('APP_NAME')}} • Backoffice</title>
+        <link rel="preconnect" href="https://fonts.gstatic.com">
+        <link href="{{ getCDN('swagg/plugins/backoffice/fonts/Kodchasan/style.css?family=Kodchasan:600&display=swap') }}" rel="stylesheet">
+        <link href="{{ getCDN('swagg/plugins/backoffice/fonts/Dosis/style.css?family=Dosis&display=swap') }}" rel="stylesheet">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ getUrl('favicon.png?v=' ~ random()) }}">
+        {{ getHeadAssets(['bs-3','fa-4', 'fa-5','animate','basic', 'tabs']) }}
+        {{ getCDN([ 'pretty-checkbox/css/pretty-checkbox.min', 'daterangepicker/css/daterangepicker.min' ]) }}
+        {{ getCDN([ 'swagg/services/replacenode', 'moment/moment.min', 'daterangepicker/js/daterangepicker.min', 'swagg/services/diapowl' ], 'js') }}
+        <script defer="true" src="{{ getCDN('swagg/sfm/bootscript.js') }}?v={{ random(0,99) }}"></script>
+        {{ bundleMacros.getCSS() }}
+    </head>
+    <body class="{{ bundleMacros.bodyClsName() }}">
+
+        <div class="preloader-wrapper">
+            <div class="preloader">
+                <img src="{{ getLogoSrc(random()) }}">
+                <img src="{{ getCDN('swagg/assets/img/loading-spinner.gif') }}">
+            </div>
+        </div>
+
+        <div id="app" class="app-page">
+            <header id="main_header" class="main-header" data-body-class="{{ bundleMacros.bodyClsName() }}">
+                <div class="left">
+                    <button data-js="aside={click:toggle}" class="md-visible">
+                        <span class="iconify bars" data-icon="codicon:three-bars" data-inline="false"></span>
+                        <span class="iconify closer" data-icon="fe:close" data-inline="false"></span>
+                    </button>
+                    <h3 class="title no-mg text-uppercase ellipsis lc1 xs-hidden">SWAGG</h3>
+                </div>
+                <div class="right">
+                    <h2 class="title no-mg text-uppercase"><a href="{{ getUrl() }}" target="_blank"><img src="{{ getLogoSrc(random()) }}" style="background:#fff"></a><span class="xs-hidden ellipsis lc1">{{ getAppEnv('APP_NAME') }}</span></h2>
+                </div>
+            </header>
+            {{ bundleMacros.getAside() }}
+            <main>
+                <header class="header">
+                    <a title="Revenir en arrière" href="#" class="button btn-backward"><span class="iconify" data-icon="ion:arrow-back-outline" data-inline="false"></span></a>
+                    <h1 class="ellipsis lc1 title">{{ block('title') }}</h1>{% block btnAdd %}{% endblock %}
+                    <a title="Avancer" href="{{ getCurrentUrlQueryLess() }}" class="button btn-forward hidden"><span class="iconify" data-icon="fluent:arrow-forward-16-filled" data-inline="false"></span></a>
+                    <a title="Actualiser cette page" href="{{ getCurrentUrl()|replace({'&_ajaxify=true':'','?_ajaxify=true':''}) }}" class="button btn-reload"><span class="iconify" data-icon="radix-icons:reload" data-inline="false"></span></a>
+                </header>
+                <div class="main-content">
+                    <div id="main_scroller_inner" class="scroller-inner">
+                        {{block('main')}}
+                        <br><br>
+                        <div class="dp-table mg-auto"><p class="text-center">© 2021 Swaggair, A CMS by stOne based on Quant Tous droits réservés</p></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </body>
+</html>

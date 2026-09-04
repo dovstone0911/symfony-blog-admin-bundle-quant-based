@@ -1,0 +1,164 @@
+{% extends '@DovStoneSymfonyBlogAdminBundleMoSQLBased/base.html.twig' %}
+
+{% import '@DovStoneSymfonyBlogAdminBundleMoSQLBased/partials/macros.html.twig' as bundleMacros %}
+
+{% block title %}{{ data.title }}{% endblock %}
+{% block btnAdd %}
+    {% if data.is == 'list' %}<a href="{{ data.btnAdd|raw }}" class="btn-add btn btn-primary btn-sm"><i class="fa fa-plus"></i>Ajouter</a>
+    {% endif %}
+{% endblock %}
+{% block main %}
+
+    {% if data.is == 'list' %}
+
+        {% include '@DovStoneSymfonyBlogAdminBundleMoSQLBased/partials/search.html.twig' %}
+
+        <div data-loadmore-view>
+            {% if data.bloggies is empty %}
+                {{ getBundleEmptyListView() }}
+            {% else %}
+                <div class="tiles ">
+                    <div class="tile tile-table">
+                        <div class="content">
+                            <div class="table-responsive">
+
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th data-minmax="20" class="text-center" title="N°">N°</th>
+                                            <th data-minmax="200" class="text-center" title="Actions">Actions</th>
+                                            <th data-minmax="1" title="Titre">Titre</th>
+                                            {{ getTh(data.acfChildren ?? [], data.totalCount) }}
+                                            <th title="Lien">Lien</td>
+                                            <th data-minmax="80" class="text-center" title="En ligne ?">En ligne ?</th>
+                                            <th data-minmax="80" class="text-center" title="Vues">Vues</th>
+                                            <th data-minmax="130" class="text-center" title="Création">Création</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody data-loadmore-replacement class="initDiapOwl">
+                                        {% for b in data.bloggies %}
+                                            {% set href = getHref(b) %}
+                                            <tr>
+                                                <td class="text-center" data-indexify="0"></td>
+                                                <td class="text-center">
+                                                    <div class="table-actions cell-container">
+                                                    
+                                                        {% if userCan('edit', false) %}
+                                                            <div class="cell">
+                                                                <a data-csrf-token="{{ csrfToken(false) }}" data-undoable="{{ path('_deleteBloggy', {'id': attr(b, 'id')}) }}" data-undoable-parent="tr" title="Supprimer" class="btn btn-xs btn-danger">
+                                                                    <i class="fa fa-trash"></i>
+                                                                </a>
+                                                            </div>
+                                                        {% endif %}
+
+                                                        {% if userCan('admin') %}
+                                                            <div class="cell">
+                                                                <a target="_blank" data-post-href="{{ path('_basicUpdateBloggy', {'id': attr(b, 'id')}) }}" data-info='{"html":"","ctx":"","css":"", "_token":"{{csrfToken(false)}}"}' title="Recharger le layout" class="btn btn-xs btn-default">
+                                                                    <i class="fa fa-recycle"></i>
+                                                                </a>
+                                                            </div>
+                                                        {% endif %}
+
+                                                        {% if userCan('moderate', false) %}
+                                                            {% if attr(b, 'published')=='off' %}
+                                                                {% set title = 'Publier' %}
+                                                                {% set cls = 'warning' %}
+                                                                {% set action = 'on' %}
+                                                            {% else %}
+                                                                {% set title = 'Mettre en relecture' %}
+                                                                {% set cls = 'success' %}
+                                                                {% set action = 'off' %}
+                                                            {% endif %}
+                                                            <div class="cell">
+                                                                <a data-post-href="{{ path('_basicUpdateBloggy', {'id': attr(b, 'id')}) }}" data-info='{"published":"{{action}}", "_token":"{{csrfToken(false)}}"}' title="{{ title }}" class="btn btn-xs btn-{{cls}}">
+                                                                    <i class="fa fa-recycle"></i>
+                                                                </a>
+                                                            </div>
+                                                        {% endif %}
+
+                                                        {% if userCan('edit', false) %}
+                                                            <div class="cell">
+                                                                <a href="{{ path('_updateBloggy', {'type': attr(b, 'type'), 'id': attr(b, 'id')}) }}" title="Modifier" class="btn btn-xs btn-info">
+                                                                    <i class="fa fa-pencil"></i>
+                                                                </a>
+                                                            </div>
+                                                        {% endif %}
+                                                        
+                                                        {% if userCan('edit', false) %}
+                                                            <div class="cell">
+                                                                <a target="_blank" href="{{ href }}?swagg" title="Construire" class="btn btn-xs btn-primary">
+                                                                    <i class="fa fa-magic"></i>
+                                                                </a>
+                                                            </div>
+                                                        {% endif %}
+
+                                                    </div>
+                                                </td>
+                                                <td><div class="ellipsis">{{ attr(b, 'title')|raw }}</div></td>
+                                                {{ getTd(data.acfChildren ?? [], b, data.totalCount) }}
+                                                <td title="{{ href }}">
+                                                    <a target="_blank" href="{{ href }}">{{ href }}</a>
+                                                </td>
+                                                <td class="text-center">
+                                                    {% if attr(b, 'published')=='on' %}
+                                                        <span class="badge bg-success">En ligne</span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger">Hors-ligne</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-center">{{ getHits(b) }}</td>
+                                                <td class="text-center">{{  attr(b, 'created_at')|date("d/m/Y à H:i") }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {{ bundleMacros.loadMore({ 'knpPaginator': data.knpPaginator }) }}
+            {% endif %}
+        </div>
+
+    {% else %}
+
+        {% set b = data.bloggy ?? [] %}
+        {% set acfChildren = data.acfChildren %}
+        {% set tilesData = {
+            'data':data, 
+            'parent':attr(data.acfChildren, 'parent'), 
+            'link_type':attr(data.acfChildren, 'link_type') 
+        } %}
+
+        <form action="{{data.formAction}}" method="post">
+
+            {{ csrfToken() }}
+        
+            <input type="hidden" name="type" value="{{ acfChildren.name }}">
+
+            <div class="tiles">
+                {{ bundleMacros.getTiles(tilesData) }}
+                {{ getAcfRelatedTiles(acfChildren, tilesData, b) }}
+            </div>
+
+            <footer class="submit-wrapper">
+                <button class="btn btn-danger" type="submit">Enregistrer</button>
+            </footer>
+        </form>
+
+    {% endif %}
+
+    <style type="text/less">
+      .field {
+        input { padding-right: 27px; }
+        .btn-reset { position:absolute;right:0;top:50%;transform:translateY(-50%);margin-right:6px;padding:0 8px;border-radius:1px }
+        &.has-empty-val {
+          .btn-reset { display: none }
+        }
+        ~em, em { top: 1px; position: relative; color:#c1c1c1; font-size: 11px; font-family: monospace; }
+      }
+    </style>
+
+{% endblock %}

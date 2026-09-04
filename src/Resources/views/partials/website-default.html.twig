@@ -1,0 +1,27 @@
+{% set post = getPost() %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{{ post.title }} | {{ getAppEnv('APP_NAME') }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      #fof .hgroup h1,#fof .hgroup h2,body{margin:0;padding:0}#fof,#fof p{display:block}body{font-size:13px;font-family:Georgia,"Times New Roman",Times,serif;color:#919191}.row2{color:#979797;background-color:#fff}#fof{width:100%;padding:150px 0;line-height:1.6em;text-align:center}#fof .hgroup{margin-bottom:15px}#fof .hgroup h1{margin-bottom:15px;font-size:40px}#fof .hgroup h2{display:inline-block;padding:35px 0 55px;font-size:80px;border:solid #ccc;border-width:1px 0;text-transform:lowercase;margin:30px auto}#fof p{margin:15px 0 0;padding:0;font-size:16px}#fof p:first-child{margin-top:0}@media screen and (max-width:991px){*{font-size:100%!important}}
+    </style>
+  </head>
+  <body>
+    <div class="wrapper row2">
+      <div id="container" class="clear">
+        <section id="fof" class="clear">
+          <div class="hgroup">
+            <h1>{{ post.title }}</h1>
+          </div>
+          <p>
+            <a href="{{ getUrl('/') }}">Retour à l'Accueil</a>
+          </p>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>
