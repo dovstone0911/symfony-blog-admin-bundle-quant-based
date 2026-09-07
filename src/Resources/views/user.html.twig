@@ -1,0 +1,310 @@
+{% extends '@DovStoneSymfonyBlogAdminBundleMoSQLBased/base.html.twig' %}
+
+{% import '@DovStoneSymfonyBlogAdminBundleMoSQLBased/partials/macros.html.twig' as bundleMacros %}
+
+{% block title %}{{ data.title }}{% endblock %}
+{% block btnAdd %}
+    {% if data.is == 'list' and userCan('edit', false) %}
+        <a href="{{ data.btnAdd|raw }}" class="btn-add btn btn-primary btn-sm"><i class="fa fa-plus"></i>Ajouter</a>
+    {% endif %}
+{% endblock %}
+{% block main %}
+
+    {% if data.is == 'list' %}
+        
+        {% include '@DovStoneSymfonyBlogAdminBundleMoSQLBased/partials/search.html.twig' %}
+
+        <div data-loadmore-view>
+
+            {% if data.users is empty %}
+
+                {{ getBundleEmptyListView() }}
+
+            {% else %}
+
+                <div class="tiles">
+                    <div class="tile tile-table">
+                        <div class="content">
+                            <div class="table-responsive">
+
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th data-minmax="20" class="text-center">N°</th>
+                                            <th data-minmax="180" class="text-center">Actions</th>
+                                            <th data-minmax="80">Identifiant</th>
+                                            <th>Nom d'Utilisateur</th>
+                                            <th data-minmax="200">Rôles</th>
+                                            <th data-minmax="80">Mle</th>
+                                            <th data-minmax="80" class="text-center">Actif ?</th>
+                                            <th data-minmax="100" class="text-center">Approuvé ?</th>
+                                            <th data-minmax="130" class="text-center">Création</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody data-loadmore-replacement>
+                                        {% for u in data.users %}
+                                            {% set approved = attr(u, 'approved') %}
+                                            <tr>
+                                                <td class="text-center" data-indexify="0"></td>
+                                                <td class="text-center">
+                                                    <div class="table-actions cell-container">
+                                                        {% if User.id != u.id %}
+                                                            <div class="cell">
+                                                                <a data-csrf-token="{{ csrfToken(false) }}" data-undoable="{{ path('_deleteUser', {'id': u.id}) }}" data-undoable-parent="tr" title="Supprimer" class="btn btn-xs btn-danger">
+                                                                    <i class="fa fa-trash"></i>
+                                                                </a>
+                                                            </div>
+                                                            {% if attr(u, 'approved')=='off' %}
+                                                                {% set title = 'Approuver le compte' %}
+                                                                {% set cls = 'warning' %}
+                                                                {% set action = 'on' %}
+                                                            {% else %}
+                                                                {% set title = 'Désapprouver le compte' %}
+                                                                {% set cls = 'primary' %}
+                                                                {% set action = 'off' %}
+                                                            {% endif %}
+                                                            <div class="cell">
+                                                                <a data-post-href="{{ path('_basicUpdateUser', {'id': u.id}) }}" data-info='{"approved":"{{action}}","_token":"{{csrfToken(false)}}"}' title="{{ title }}" class="btn btn-xs btn-{{cls}}">
+                                                                    <i class="fa fa-ban"></i>
+                                                                </a>
+                                                            </div>
+                                                            
+                                                            {% if attr(u, 'enabled')=='off' %}
+                                                                {% set title = 'Activer le compte' %}
+                                                                {% set cls = 'warning' %}
+                                                                {% set action = 'on' %}
+                                                            {% else %}
+                                                                {% set title = 'Désactiver le compte' %}
+                                                                {% set cls = 'success' %}
+                                                                {% set action = 'off' %}
+                                                            {% endif %}
+                                                            <div class="cell">
+                                                                <adata-post-href="{{ path('_basicUpdateUser', {'id': u.id}) }}" data-info='{"enabled":"{{action}}","_token":"{{csrfToken(false)}}"}' title="{{ title }}" class="btn btn-xs btn-{{cls}}">
+                                                                    <i class="fa fa-recycle"></i>
+                                                                </a>
+                                                            </div>
+
+
+                                                        {% endif %}
+                                                        <div class="cell">
+                                                            <a href="{{ path('_updateUser', {'id': u.id}) }}" title="Modifier" class="btn btn-xs btn-info">
+                                                                <i class="fa fa-pencil"></i>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>{{ attr(u, 'id') }}</td>
+                                                <td>{{ attr(u, 'username') }}</td>
+                                                <td>[ {{ attr(u, 'roles')|join(' -- ') }} ]</td>
+                                                <td>{{ attr(u, 'mle')|upper }}</td>
+                                                <td class="text-center">
+                                                    {% if attr(u, 'enabled')=='on' %}
+                                                        <span class="badge bg-success">Actif</span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger">Inactif</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-center">
+                                                    {% if attr(u, 'approved')=='on' %}
+                                                        <span class="badge bg-success">Approuvé</span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger">Désapprouvé</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-center">{{ attr(u, 'created_at')|date("d/m/Y à H:i") }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{ bundleMacros.loadMore({ 'knpPaginator': data.knpPaginator }) }}
+
+            {% endif %}
+                
+        </div>
+
+    {% else %}
+
+        {% set u = data.user ?? [] %}
+        {% set tab = app.request.get('tab') %}
+
+        <form action="{{data.formAction}}" method="post">
+            {{ csrfToken() }}
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 offset-lg-4">
+                        
+                        <header class="user-header">
+                            <div class="user-avatar text-center">
+                                <div class="field">
+                                    <input
+                                        name="image"
+                                        type="hidden"
+                                        value="{{ attr(u, 'image') }}"
+                                        data-js="sfmACF={click:fileControl__previewPicked}"
+                                        data-info='{{ {'_extension':'png', '_absPath':attr(u, 'image', '')}|json_encode }}'
+                                    >
+                                    <div data-js="sfmACF={click:fileControl__getLibrary}" class="widget-preview-area is-empty">
+                                        <a data-js="sfmACF={click:fileControl__removeFile}" title="Retirer"><i class="fa fa-trash"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if u is not empty %}
+                                <div class="user-meta text-center">
+                                    <h5 class="user-username">{{ attr(u, 'username') }}</h5>
+                                    <p class="user-email">{{ attr(u, 'email') }}</p>
+                                    <p class="user-role badge bg-success">[ {{ attr(u, 'roles')|join(' -- ') }} ]</p>
+                                </div>
+                            {% else %}
+                                <br>
+                            {% endif %}
+                        </header>
+
+                        {% if u is not empty %}
+                            <nav class="doc-tabs text-center">
+                                <a href="{{ path('_updateUser', {'id':attr(u, 'id')}) }}" class="{{tab=='password'?'':'active'}}">Info</a>
+                                <a href="{{ path('_updateUser', {'id':attr(u, 'id')}) }}?tab=password" class="{{tab=='password'?'active':''}}">Mot de passe</a>
+                            </nav>
+                        {% else %}
+                            <br>
+                        {% endif %}
+                        
+                        <div class="user-main"> 
+                            <div class="tiles">
+                                {% if tab == 'password' %}
+                                    <div class="tile">
+                                        <header><h3 class="title">Mot de passe</h3></header>
+                                        <div class="content">
+                                            <div class="row mg-top">
+                                                <div class="col-md-12">{{ gfInput("Saisissez un nouveau mot de passe", 'password', '', 'type="password" required')|raw }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="tile">
+                                        <header><h3 class="title">Noms et prénoms</h3></header>
+                                        <div class="content">
+                                            <div class="row mg-top">
+                                                <div class="col-md-12">{{ gfInput("Nom d'utilisateur *", 'username', attr(u, 'username'), 'required')|raw }}</div>
+                                                <div class="col-md-12 mg-top">{{ gfInput("Nom *", 'lastname', attr(u, 'lastname'), 'required')|raw }}</div>
+                                                <div class="col-md-12 mg-top">{{ gfInput("Prénoms", 'firstname', attr(u, 'firstname'), '')|raw }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="tile">
+                                        <header><h3 class="title">Téléphone</h3></header>
+                                        <div class="content">
+                                            <div class="row mg-top">
+                                                <div class="col-md-12">{{ gfInput("Email", 'email', attr(u, 'email'), 'type="email"')|raw }}</div>
+                                                <div class="col-md-12 mg-top">{{ gfInput("Téléphone (10 chiffres)", 'telephone', attr(u, 'telephone'), 'pattern="([0-9]+){10}"')|raw }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if userCan('admin') %}
+
+                                        <div class="tile">
+                                            <header><h3 class="title">Rôles</h3></header>
+                                            <div class="content">
+                                                {% for r in data.roles %}
+                                                    {% set role = attr(r, 'slug') %}
+                                                    <div class="row gf-wrapper mg-top">
+                                                        <div class="col-xs-12 col-sm-4">
+                                                            <div class="pretty p-switch p-outline">
+                                                                <input
+                                                                    name="roles[]"
+                                                                    value="{{ role }}"
+                                                                    type="checkbox" {{ userCan(role, u) ? 'checked' : ''}}
+                                                                >
+                                                                <div class="state"><label>{{ attr(r, 'title') }}</label></div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-xs-12 col-sm-8">{{ attr(r, 'description') }}</div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+
+                                        {% set acf = getAcf() %}
+                                        {% set boNavData = getGlobal('backOfficeNavData') %}
+                                        
+                                        <div class="tile">
+                                            <header><h3 class="title">Rubriques administrées</h3></header>
+                                            <div class="content">
+                                                <div class="row mg-top">
+                                                    
+                                                    {% for data in acf %}
+                                                        {# {% set acf_type = attr(data, 'acf_type') %}
+                                                        {% if acf_type is null or acf_type == 'default' %} #}
+                                                            <div class="col-xs-12 col-sm-4 mg-top">
+                                                                <div class="pretty p-switch p-outline">
+                                                                    <input
+                                                                        name="acfToHandle[]"
+                                                                        value="{{ data.id }}"
+                                                                        type="checkbox" {{ data.id in attr(u, 'acfToHandle') ? 'checked' : ''}}
+                                                                    >
+                                                                    <div class="state"><label>{{ data.title }}</label></div>
+                                                                </div>
+                                                            </div>
+                                                        {# {% endif %} #}
+                                                    {% endfor %}
+                                                    
+                                                    {% for data in boNavData %}
+                                                        <div class="col-xs-12 col-sm-4 mg-top">
+                                                            <div class="pretty p-switch p-outline">
+                                                                <input
+                                                                    name="acfToHandle[]"
+                                                                    value="{{ data.id }}"
+                                                                    type="checkbox" {{ data.id in attr(u, 'acfToHandle') ? 'checked' : ''}}
+                                                                >
+                                                                <div class="state"><label>{{ data.title }}</label></div>
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    {% endif %}
+
+                                {% endif %}
+                            </div>
+                            
+                            <footer class="submit-wrapper">
+                                <button class="btn btn-danger" type="submit">Enregistrer</button>
+                            </footer>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <style type="text/less">
+            .doc-tabs { margin: 0 }
+            .user-avatar {
+                background-color: #ccc; border-radius: 0 0 10px 10px; padding-top: 120px; margin-bottom: 85px;
+                svg { font-size: 120px; border-radius: 100%; position: relative; top: 15px; border: 5px solid #fff; }
+                .widget-preview-area { width: 150px; height: 150px; border-radius: 100%; margin: -75px auto; position: absolute; left: 0; right: 0;
+                    background-color: #ccc; background-size: cover!important;
+                    &.is-empty::before { top: 64px }
+                    a { border-radius: 100%; padding: 8px 12px }
+                }
+            }
+            .user-meta { margin-top: 20px; }
+            .user-username { font-weight: bold; margin-bottom: 0 }
+            .user-email { font-size: 13px; margin-bottom: 10px; }
+        </style>
+
+        <script defer src="{{ getCDN('swagg/sfm/acf.js?v=') ~ random() }}"></script>
+
+    {% endif %}
+
+{% endblock %}

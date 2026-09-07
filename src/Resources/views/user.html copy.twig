@@ -1,0 +1,204 @@
+{% extends '@DovStoneSymfonyBlogAdminBundleMoSQLBased/base.html.twig' %}
+
+{% block title %}{{ data.title }}{% endblock %}
+{% block btnAdd %}
+    {% if data.is == 'list' %}<a href="{{ data.btnAdd|raw }}" class="btn-add btn btn-primary btn-sm"><i class="fa fa-plus"></i>Ajouter</a>
+    {% endif %}
+{% endblock %}
+{% block main %}
+
+    {% if data.is == 'list' %}
+
+        {% if data.users is empty %}
+
+            {{ getBundleEmptyListView() }}
+
+        {% else %}
+
+            <div class="tiles">
+                <div class="tile">
+                    <div class="content">
+                        <div class="table-responsive">
+
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th data-minmax="20" class="text-center">N°</th>
+                                        <th data-minmax="150" class="text-center">Actions</th>
+                                        <th data-minmax="200">Nom d'Utilisateur</th>
+                                        <th>Rôle</th>
+                                        <th data-minmax="80">Mle</th>
+                                        <th data-minmax="80" class="text-center">Actif ?</th>
+                                        <th data-minmax="130" class="text-center">Création</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for u in data.users %}
+                                        <tr>
+                                            <td class="text-center" data-indexify="0"></td>
+                                            <td class="text-center">
+                                                <div class="table-actions cell-container">
+                                                    <div class="cell">
+                                                        <a data-undoable="{{ path('_deleteUser', {'id': attr(u, 'id')}) }}" data-undoable-parent="tr" title="Supprimer" class="btn btn-xs btn-danger">
+                                                            <i class="fa fa-trash"></i>
+                                                        </a>
+                                                    </div>
+                                                    {% if attr(u, '_enabled')=='off' %}
+                                                        {% set title = 'Activer le compte' %}
+                                                        {% set cls = 'warning' %}
+                                                        {% set action = 'on' %}
+                                                    {% else %}
+                                                        {% set title = 'Désactiver le compte' %}
+                                                        {% set cls = 'success' %}
+                                                        {% set action = 'off' %}
+                                                    {% endif %}
+                                                    <div class="cell">
+                                                        <a data-post-href="{{ path('_basicUpdateUser', {'id': attr(u, 'id')}) }}" data-info='{"_enabled":"{{action}}"}' title="{{ title }}" class="btn btn-xs btn-{{cls}}">
+                                                            <i class="fa fa-recycle"></i>
+                                                        </a>
+                                                    </div>
+                                                    <div class="cell">
+                                                        <a href="{{ path('_updateUser', {'id': attr(u, 'id')}) }}" title="Modifier" class="btn btn-xs btn-info">
+                                                            <i class="fa fa-pencil"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>{{ attr(u, 'username') }}</td>
+                                            <td>{{ attr(u, '_role')|upper }}</td>
+                                            <td>{{ attr(u, '_mle') }}</td>
+                                            <td class="text-center">
+                                                {% if attr(u, '_enabled')=='on' %}
+                                                    <span class="badge bg-success">Actif</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">inactif</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">{{ attr(u, 'created_at')|date("d/m/Y à H:i") }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+
+                            </table>
+
+                            <div class="dp-table mg-auto">
+                                {{ knp_pagination_render(data.users, getKnpTplPath()) }}
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        {% endif %}
+
+    {% else %}
+
+        {% set u = data.user ?? [] %}
+        {% set tab = app.request.get('tab') %}
+
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6 offset-lg-3">
+                    
+                    <header class="user-header">
+                        <div class="user-avatar text-center"><span class="iconify" data-icon="fa-solid:user-circle" data-inline="false"></span></div>
+                        {% if u is not empty %}
+                            <div class="user-meta text-center">
+                                <h5 class="user-username">{{ attr(u, 'username') }}</h5>
+                                <p class="user-email">{{ attr(u, 'email') }}</p>
+                                <p class="user-role badge bg-success">{{ attr(u, '_role')|upper }}</p>
+                            </div>
+                        {% else %}
+                            <br>
+                        {% endif %}
+                    </header>
+
+                    {% if u is not empty %}
+                        <nav class="doc-tabs text-center">
+                            <a href="{{ path('_updateUser', {'id':attr(u, 'id')}) }}" class="{{tab=='password'?'':'active'}}">Info</a>
+                            <a href="{{ path('_updateUser', {'id':attr(u, 'id')}) }}?tab=password" class="{{tab=='password'?'active':''}}">Mot de passe</a>
+                        </nav>
+                    {% else %}
+                        <br>
+                    {% endif %}
+                    
+                    <div class="user-main">
+                        <form action="{{data.formAction}}" method="post">
+                            <div class="tiles">
+                                {% if tab == 'password' %}
+                                    <div class="tile">
+                                        <header><h3 class="title">Mot de passe</h3></header>
+                                        <div class="content">
+                                            <div class="row mg-top">
+                                                <div class="col-md-12">{{ gfInput("Saisissez un nouveau mot de passe", '_password', '', 'type="password" required') }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="tile">
+                                        <header><h3 class="title">Noms et prénoms</h3></header>
+                                        <div class="content">
+                                            <div class="row mg-top">
+                                                <div class="col-md-12">{{ gfInput("Nom d'utilisateur *", 'username', attr(u, 'username'), 'required') }}</div>
+                                                <div class="col-md-12 mg-top">{{ gfInput("Nom *", 'lastname', attr(u, 'lastname'), 'required') }}</div>
+                                                <div class="col-md-12 mg-top">{{ gfInput("Prénoms", 'firstname', attr(u, 'firstname'), '') }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="tile">
+                                        <header><h3 class="title">Téléphone</h3></header>
+                                        <div class="content">
+                                            <div class="row mg-top">
+                                                <div class="col-md-12">{{ gfInput("Email", 'email', attr(u, 'email'), 'type="email"') }}</div>
+                                                <div class="col-md-12 mg-top">{{ gfInput("Téléphone (10 chiffres)", 'telephone', attr(u, 'telephone'), 'pattern="([0-9]+){10}"') }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% if attr(u, 'id') != attr(User, 'id') %}
+                                        <div class="tile">
+                                            <header><h3 class="title">Rôle</h3></header>
+                                            <div class="content">
+                                                <div class="row mg-top">
+                                                    <div class="col-md-12">
+                                                        <div class="gf-wrapper">
+                                                            <select class="gf-control form-control" name="_roles[]" data-select-option="{{ attr(u, '_roles.id') }}">
+                                                                {% for r in data.roles %}
+                                                                    <option value="{{ attr(r, 'slug', 'master_admin') }}">{{ attr(r, 'title')|upper }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                            <div class="gf-label">Sélectionner un rôle à attribuer à l'utilisateur</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                            
+                            <footer class="submit-wrapper">
+                                <button class="btn btn-danger" type="submit">Enregistrer</button>
+                            </footer>
+
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <style type="text/less">
+            .doc-tabs { margin: 0 }
+            .user-avatar {
+                background-color: #ccc; border-radius: 0 0 10px 10px; padding-top: 85px;
+                svg { font-size: 120px; border-radius: 100%; position: relative; top: 15px; border: 5px solid #fff; }
+            }
+            .user-meta { margin-top: 20px; }
+            .user-username { font-weight: bold; margin-bottom: 0 }
+            .user-email { font-size: 13px; margin-bottom: 10px; }
+        </style>
+
+    {% endif %}
+
+{% endblock %}

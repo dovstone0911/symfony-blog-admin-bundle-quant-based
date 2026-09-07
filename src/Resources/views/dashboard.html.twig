@@ -1,0 +1,64 @@
+{% extends '@DovStoneSymfonyBlogAdminBundleMoSQLBased/base.html.twig' %}
+
+{% block title %}Tableau de bord{% endblock %}
+{% block main %}
+
+<div class="tiles">
+    <div class="col-sm-6 col-md-6 col-lg-4">
+        <div class="tile">
+            <header><h3 class="title">Compteur de visites</h3></header>
+            <div class="content">
+                <div class="cell-container">
+                    <div class="cell cell-left"><div class="icon"><i class="fa fa-sort-numeric-up-alt"></i></div></div>
+                    <div class="cell">
+                        {% for p in [
+                            ['En ligne',      'online'],
+                            ["Aujourd'hui",   'day'],
+                            ['Hier',          'yesterday'],
+                            ['Cette Semaine', 'week'],
+                            ['Ce Mois',       'month'],
+                            ['Cette Année',   'year'],
+                            ['Au Total',      'all'],
+                        ] %}
+                            {% set label = p[0] %}
+                            {% set count = getGlobal(p[1]) %}
+                            <div class="col col-sm-12 col-md-12">
+                                <a title="{{label}}s ({{count}})">
+                                    <i class="icon fa fa-calendar"></i>
+                                    <span class="_label">{{label}}</span>
+                                    <span class="_count">{{count}}</span>
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style type="text/less">
+    @primary: #2baea8;
+    .tiles .content {
+        display: table; width: 100%; margin: 30px 0;
+        .icon, .number {
+            font-size: 5em;
+            color: @primary;
+            text-align: center;
+        }
+        a {
+            display: block; color: #999; text-shadow: 1px 1px 1px #fff; margin-bottom: 10px; white-space: nowrap; 
+            position: relative; padding-left: 30px; padding-right: 20px;
+            b { margin-right: 10px; display: inline-block; color: #000; width: 20px; }
+            .icon { margin-top: -3px; text-shadow: 1px 1px 1px #000; position: absolute; left: 0; width: 25px; height: 25px; background-color: @primary; color: #fff; border-radius: 100%; text-align: center; line-height: 25px; font-size: 10px; }
+            span {
+                &._label { white-space: nowrap; display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+                &._count { position: absolute; padding-right: 5px; margin-left: 5px; background-color: #eeeeee; color: #000; border-radius: 100%; padding-left: 3px; }
+            }
+        }
+        a[data-href] { text-decoration: underline }
+        .cell-left { width: 1% }
+    }
+</style>
+
+{% endblock %}

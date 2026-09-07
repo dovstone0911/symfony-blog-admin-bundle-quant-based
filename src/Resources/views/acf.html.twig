@@ -1,0 +1,414 @@
+{% extends '@DovStoneSymfonyBlogAdminBundleMoSQLBased/base.html.twig' %}
+
+{% import '@DovStoneSymfonyBlogAdminBundleMoSQLBased/partials/macros.html.twig' as bundleMacros %}
+
+{% block title %}{{ data.title }}{% endblock %}
+{% block btnAdd %}
+    {% if data.is == 'list' and userCan('edit', false) %}
+        <a href="{{ data.btnAdd|raw }}" class="btn-add btn btn-primary btn-sm"><i class="fa fa-plus"></i>Ajouter</a>
+    {% endif %}
+{% endblock %}
+{% block main %}
+
+    {% if data.is == 'list' %}
+
+        {% include '@DovStoneSymfonyBlogAdminBundleMoSQLBased/partials/search.html.twig' %}
+
+        <div data-loadmore-view>
+
+            {% if data.bloggies is empty %}
+
+                {{ getBundleEmptyListView() }}
+
+            {% else %}
+
+                <div class="tiles">
+                    <div class="tile">
+                        <div class="content">
+                            <div class="table-responsive">
+
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th data-minmax="20" class="text-center">N°</th>
+                                            <th data-minmax="130" class="text-center">Actions</th>
+                                            <th data-minmax="1">Titre</th>
+                                            <th>Attribut <em>(name)</em></th>
+                                            <th data-minmax="80" class="text-center">En ligne ?</th>
+                                            <th data-minmax="130" class="text-center">Création</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody data-loadmore-replacement>
+                                        {% for b in data.bloggies %}
+                                            <tr>
+                                                <td class="text-center" data-indexify="0"></td>
+                                                <td class="text-center">
+                                                    <div class="table-actions cell-container">
+                    
+                                                        {% if userCan('edit', false) %}
+                                                            <div class="cell">
+                                                                <a data-csrf-token="{{ csrfToken(false) }}" data-undoable="{{ path('_deleteBloggy', {'id': attr(b, 'id')}) }}?reloadAside" data-undoable-parent="tr" title="Supprimer" class="btn btn-xs btn-danger">
+                                                                    <i class="fa fa-trash"></i>
+                                                                </a>
+                                                            </div>
+                                                        {% endif %}
+
+                                                        {% if userCan('moderate', false) %}
+                                                            {% if attr(b, 'published')=='off' %}
+                                                                {% set title = 'Publier' %}
+                                                                {% set cls = 'warning' %}
+                                                                {% set action = 'on' %}
+                                                            {% else %}
+                                                                {% set title = 'Mettre en relecture' %}
+                                                                {% set cls = 'success' %}
+                                                                {% set action = 'off' %}
+                                                            {% endif %}
+                                                            <div class="cell">
+                                                                <a data-post-href="{{ path('_basicUpdateBloggy', {"id": attr(b, 'id')}) }}" data-info='{"published":"{{action}}", "_token":"{{csrfToken(false)}}"}' title="{{ title }}" class="btn btn-xs btn-{{cls}}">
+                                                                    <i class="fa fa-recycle"></i>
+                                                                </a>
+                                                            </div>
+                                                        {% endif %}
+
+                                                        {% if userCan('edit', false) %}
+                                                            <div class="cell">
+                                                                <a href="{{ path('_updateBloggy', {'type': 'acf', 'id': attr(b, 'id')}) }}" title="Modifier" class="btn btn-xs btn-info">
+                                                                    <i class="fa fa-pencil"></i>
+                                                                </a>
+                                                            </div>
+                                                        {% endif %}
+
+                                                    </div>
+                                                </td>
+                                                <td>{{ attr(b, 'title')|raw }}</td>
+                                                <td><em>{{ attr(b, 'name') }}</em></td>
+                                                <td class="text-center">
+                                                    {% if attr(b, 'published')=='on' %}
+                                                        <span class="badge bg-success">En ligne</span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger">Hors-ligne</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-center">{{  attr(b, 'created_at')|date("d/m/Y à H:i") }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{ bundleMacros.loadMore({ 'knpPaginator': data.knpPaginator }) }}
+                
+            {% endif %}
+        </div>
+
+    {% else %}
+
+        {% set b = data.bloggy ?? [] %}
+
+        <form action="{{data.formAction}}" method="post">
+
+            {{ csrfToken() }}
+
+            <div class="tiles">
+
+                <div class="tile">
+                    <header><h3 class="title">Désignation</h3></header>
+                    <div class="content">
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="cell-container">
+                                    <div class="cell cell-60">
+                                        <div class="col-md-4">
+                                            <div class="gf-wrapper">
+                                                <select 
+                                                name="parent" 
+                                                class="gf-control form-control select2-basic gf-full" 
+                                                data-select-option="{{ attr(b, 'parent') }}">{{data.pages}}</select>
+                                                <div class="gf-label">Héritage</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">{{ gfInput("Nom du champ", 'title', attr(b, 'title'), 'required')|raw }}</div>
+                                        <div class="col-md-4">{{ gfInput("<em>Name</em>", 'name', attr(b, 'name'))|raw }}</div><br><br><br>
+                                        <div class="col-md-6">
+                                            <div class="gf-wrapper">
+                                                <select name="layout" class="gf-control form-control select2-basic gf-full" data-select-option="{{ attr(b, 'layout') }}"><option value="customized">Personnalisé</option>{{data.layouts}}</select>
+                                                <div class="gf-label">Layout</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">{{ gfInput("Icône", 'icon', attr(b, 'icon'), '')|raw }}</div>
+                                    </div>
+                                    <div class="cell cell-40">
+                                        <div class="col-md-5">
+                                            <h6>Type d'ACF</h6>
+                                            <div class="cell-container">
+                                                {% for data in [['Défaut', 'default'], ['Option', 'option']] %}
+                                                    <div class="cell cell-33">
+                                                        <div class="pretty p-default p-round">
+                                                            <input name="acf_type" type="radio" value="{{data[1]}}" {{attr(b, 'acf_type') == data[1] or data[1] == 'default' ? 'checked' : ''}}>
+                                                            <div class="state"><label><span>{{data[0]}}</span></label></div>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-7">
+                                            <h6>Comportement</h6>
+                                            <div class="cell-container">
+                                                {% for data in [['Page', 'page'], ['Article', 'article'], ['Aucun', 'none']] %}
+                                                    <div class="cell cell-33">
+                                                        <div class="pretty p-default p-round">
+                                                            <input name="link_type" type="radio" value="{{data[1]}}" {{attr(b, 'link_type') == data[1] ? 'checked' : ''}}>
+                                                            <div class="state"><label><span>{{data[0]}}</span></label></div>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="tile tile-fields-shortcut">
+                    <header><h3 class="title">Champs dynamiques</h3></header>
+                    <div class="content">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <button data-js="acf={click:fullScreen}" class="btn-expand btn btn-sm" type="button"><i class="fa fa-expand" title="Plein écran"></i></button>
+                                <div class="gf-wrapper">
+                                    <textarea name="fieldsList" id="fields_list" class="gf-control form-control" rows="8">{{attr(b, 'fieldsList')}}</textarea>
+                                </div>
+                                <div id="fields_shortcuts" class="fields-shortcuts mg-top">
+                                    <div class="fields-group text-center"><a data-type="fields_group" style="max-width:inherit">Groupe de champs</a></div>
+                                    <div class="fields-group-wrapper">
+                                        {% for d in [
+                                            ['text','Texte'],
+                                            ['textarea', 'Zone de texte'],
+                                            ['text_rich', 'Texte Riche'],
+                                            ['page_builder', 'Constructeur de Page'],
+                                            ['email', 'Email'],
+                                            ['number', 'Nombre'],
+                                            ['date', 'Date'],
+                                            ['year', 'Année'],
+                                            ['duration', 'Durée'],
+                                            ['datetime', 'Horodatage'],
+                                            ['daterange', 'Période de date'],
+                                            ['file', 'Fichier'],
+                                            ['icon', 'Icône'],
+                                            ['bloggy', 'Bloggy'],
+                                            ['country', 'Pays'],
+                                            ['range', 'Fourchette'],
+                                            ['user', 'User'],
+                                         ] %}
+                                            <a data-type="{{d[0]}}" title="{{d[1]}}">{{d[1]}}</a> |
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tile tile-fields-readlist">
+                    <header><h3 class="title">Champs "Lecture de liste"</h3></header>
+                    <div class="content">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <button data-js="acf={click:fullScreen}" class="btn-expand btn btn-sm" type="button"><i class="fa fa-expand" title="Plein écran"></i></button>
+                                <div class="gf-wrapper">
+                                    <textarea name="readListColumns" class="gf-control form-control" rows="4">{{attr(b, 'readListColumns')}}</textarea>
+                                    <div class="gf-label">Colonnes <em>(Label @ clé_informatique @ maxmin @ valeur_par_défaut)</em></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mg-top">
+                            <div class="col-md-12">
+                                <button data-js="acf={click:fullScreen}" class="btn-expand btn btn-sm" type="button"><i class="fa fa-expand" title="Plein écran"></i></button>
+                                <div class="gf-wrapper">
+                                    <textarea name="readListToggleActions" class="gf-control form-control" rows="4">{{attr(b, 'readListToggleActions')}}</textarea>
+                                    <div class="gf-label">Interrupteurs <em>(Label @ Label_si_activé @ valeur_informatique @ maxmin @ valeur_par_défaut)</em></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mg-top">
+                            <div class="col-md-12">
+                                <div class="gf-wrapper">
+                                    <input name="readListOrderBy" class="gf-control form-control" value="{{b.readListOrderBy ?? ''}}">
+                                    <div class="gf-label">Ordonnancement<em>(created_at @ asc)</em></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mg-top">
+                            <div class="col-md-12">
+                                <button data-js="acf={click:fullScreen}" class="btn-expand btn btn-sm" type="button"><i class="fa fa-expand" title="Plein écran"></i></button>
+                                <div class="gf-wrapper">
+                                    <textarea name="parameters" class="gf-control form-control" rows="4">{{attr(b, 'parameters')}}</textarea>
+                                    <div class="gf-label">Paramètres supplémentaires</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <input type="hidden" name="type" value="acf">
+            <input type="hidden" name="in_menu" value="off">
+
+            <footer class="submit-wrapper">
+                <button class="btn btn-danger" type="submit">Enregistrer</button>
+            </footer>
+        </form>
+
+        <style type="text/less">
+        
+            #field_pattern {
+                .button-delete {
+                    display: none;
+                }
+            }
+            .field-row {
+                position: relative;
+                .index {
+                    position: absolute;
+                    left: 0;
+                    background-color: #2baea8;
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 100%;
+                    text-align: center;
+                    color: #fff;
+                    line-height: 20px;
+                    top: 15px;
+                    cursor: move;
+                }
+                .row {
+                    padding-left: 40px;
+                }
+            }
+            .fields-shortcuts {
+                .fields-group { a { color: #000 }}
+                .fields-group-wrapper {
+                    display: flex; text-align: center; justify-content: space-between; color: #999898;
+                    margin-top: 15px;
+                    a { display: table-cell !important; font-size: 12px; color: var(--p);
+                        &:not(:hover) { text-decoration: none }
+                    }
+                }
+                a {
+                    display: block !important;
+                    cursor: pointer;
+                    &:hover {
+                        color: #000 !important;
+                    }
+                    &:active {
+                        color: #000 !important;
+                    }
+                }
+            }
+            .btn-expand {
+                position: absolute;
+                top: 0;
+                right: 0;
+                margin: 42px 10px; z-index: 1;
+            }
+            body.fieldShortcut--fullscreen {
+                .header, .aside { display: none }
+                .tile-fields-shortcut {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    bottom: 0;
+                    height: calc(100% - 50px); width: 100%;
+                    z-index: 2; margin: 0; border-radius: 0;
+                    textarea {
+                        height: calc(100vh - 300px);
+                    }
+                }
+            }
+            html {
+                body {
+                    label.inheritance {
+                        margin: 15px 0 !important;
+                        float: left;
+                        width: 95px !important;
+                    }
+                }
+            }
+        </style>
+            
+        <script>
+            AddScript(function(){
+
+                "use strict";
+
+                var inti__tO = 0,
+                    ACF = {
+                        init: function(){
+                            this.bindFieldsShortcuts();
+                        },
+                        bindFieldsShortcuts: function(){
+                            $('#fields_shortcuts').find('a').attr('data-js', 'acf={click:fieldShortcut}');
+                            this.dataJs();
+                        },
+                        dataJs: function(){
+                            __.rebindDataJs();
+                            var shortcuts = {
+                                'fields_group': `type="fields_group" label="Propriétés" name="props"`,
+                                'text'		: `	type="text" label="" name="" col="12"`,
+                                'textarea'	: `	type="textarea" label="" name="" col="12"`,
+                                'text_rich'	: `	type="text-rich" label="" name="" col="12"`,
+                                'page_builder'	: `	type="page-builder" label="" name="" col="12"`,
+                                'email'		: `	type="email" label="" name="" col="12"`,
+                                'number'	: `	type="number" label="" name="" col="12"`,
+                                'date'		: `	type="date" label="" name="" col="12"`,
+                                'year'		: `	type="year" label="" name="" min="1800" col="12"`,
+                                'duration'  : `	type="duration" label="" name="" format="h:i:s" col="12"`,
+                                'datetime'  : `	type="datetime" label="" name="" col="12"`,
+                                'daterange' : `	type="daterange" label="" name="" col="12"`,
+                                'file'		: `	type="file" label="" name="" col="12"`,
+                                'icon'		: `	type="icon" label="" name="" col="12"`,
+                                'bloggy'	: `	type="bloggy" label="" name="" bloggyType="" controlType="" col="12"`,
+                                'country'	: `	type="country" label="Pays" name="" col="12"`,
+                                'range'		: `	type="range" label="" name="" col="12"`,
+                                'user'		: `	type="user" label="" name="" col="12"`,
+                            },
+                            $fields_list = $('#fields_list');
+                            __.dataJs({
+                                acf: {
+                                    fieldShortcut: function ($trigger) {
+                                        var type = $trigger.attr('data-type'),
+                                            wishContent = shortcuts[type],
+                                            currentContent = $fields_list.val(),
+                                            val = (type == 'fields_group'
+                                            ? (currentContent == '') ? wishContent : currentContent + "\n"+"\n" + wishContent
+                                            : currentContent +"\n" + wishContent);
+
+                                            $fields_list.val(val);
+                                    },
+                                    fullScreen: function(){
+                                        $('body').toggleClass('fieldShortcut--fullscreen');
+                                    }
+                                }
+                            });
+                        }
+                    };
+                    clearTimeout(inti__tO);
+                    inti__tO = setTimeout(function(){
+                        ACF.init();
+                    }, 1000)
+            });
+        </script>
+
+    {% endif %}
+
+{% endblock %}

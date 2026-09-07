@@ -1,0 +1,91 @@
+{% set APP_NAME = getAppEnv('APP_NAME') %}
+<!DOCTYPE html>
+<html data-app-config='{{ getAppConfig() }}'>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+	<title>Authentification - {{ APP_NAME }} | BACK-OFFICE</title>
+	<meta name="description" content="{{ APP_NAME }} | BACK-OFFICE">
+	<meta name="keywords" content="{{ APP_NAME }}">
+	<meta name="author" content="">
+	<meta name="url" content="{{ getCurrentUrl() }}">
+	<link rel="canonical" href="{{ getCurrentUrl() }}" />
+	<link rel="icon" type="image/png" sizes="16x16" href="">
+	<meta property="og:url" content="{{ getCurrentUrl() }}" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="{{ APP_NAME }} | BACK-OFFICE" />
+	<meta property="og:description" content="{{ APP_NAME }} | BACK-OFFICE" />
+	<meta property="og:image" content="" />
+	{{ getHeadAssets() }}
+	<script defer src="{{ getCDN('swagg/sfm/backoffice.js?v=' ~ random() ) }}"></script>
+	<link href="{{ getCDN('swagg/plugins/backoffice/fonts/Kodchasan/style.css?family=Kodchasan:600&display=swap') }}" rel="stylesheet">
+	<link href="{{ getCDN('swagg/plugins/backoffice/fonts/Dosis/style.css?family=Dosis&display=swap') }}" rel="stylesheet">
+	<style type="text/css">*{box-sizing:border-box;margin:0;padding:0;font-weight:300}body{font-family:"Dosis",sans-serif;color:#fff;font-weight:300}body ::-webkit-input-placeholder{font-family:"Dosis",sans-serif;color:#fff;font-weight:300}body :-moz-placeholder{font-family:"Dosis",sans-serif;color:#fff;opacity:1;font-weight:300}body ::-moz-placeholder{font-family:"Dosis",sans-serif;color:#fff;opacity:1;font-weight:300}body :-ms-input-placeholder{font-family:"Dosis",sans-serif;color:#fff;font-weight:300}.wrapper{background:#50a3a2;background:-webkit-linear-gradient(top left,#50a3a2 0,#53e3a6 100%);background:-moz-linear-gradient(top left,#50a3a2 0,#53e3a6 100%);background:-o-linear-gradient(top left,#50a3a2 0,#53e3a6 100%);background:linear-gradient(to bottom right,#50a3a2 0,#53e3a6 100%);position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden}.wrapper.form-success .container h1{transform:translateY(85px)}.container{max-width:600px;margin:0 auto;padding:80px 0;text-align:center;position:absolute;top:50%;transform:translateY(-50%);left:0;right:0;z-index:2;}.container h1{color:#000;font-size:30px;transition-duration:1s;transition-timing-function:ease-in-out;font-weight:200;margin-top:10px}form{position:relative;z-index:2}form input{appearance:none;outline:0;border:1px solid rgb(28 123 100);background-color:#fff;width:250px;border-radius:3px;padding:10px 15px;margin:0 auto 10px auto;display:block;text-align:center;color:#000!important;transition-duration:.25s;font-weight:300;box-shadow:inset 0 0 4px 0 #bfbfbf;font-size:18px};form input:hover{background-color:rgba(255,255,255,.4)}form input:focus{background-color:#fff;color:#53e3a6}form button{appearance:none;outline:0;background-color:#009688;border:0;padding:10px 15px;color:#fff;border-radius:3px;width:250px;cursor:pointer;font-size:18px;transition-duration:.25s}form button:hover{background-color:#1c7b64}.bg-bubbles{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1}.bg-bubbles li{position:absolute;list-style:none;display:block;width:40px;height:40px;background-color:rgba(255,255,255,.15);bottom:-160px;-webkit-animation:square 25s infinite;animation:square 25s infinite;-webkit-transition-timing-function:linear;transition-timing-function:linear}.bg-bubbles li:nth-child(1){left:10%}.bg-bubbles li:nth-child(2){left:20%;width:80px;height:80px;animation-delay:2s;animation-duration:17s}.bg-bubbles li:nth-child(3){left:25%;animation-delay:4s}.bg-bubbles li:nth-child(4){left:40%;width:60px;height:60px;animation-duration:22s;background-color:rgba(255,255,255,.25)}.bg-bubbles li:nth-child(5){left:70%}.bg-bubbles li:nth-child(6){left:80%;width:120px;height:120px;animation-delay:3s;background-color:rgba(255,255,255,.2)}.bg-bubbles li:nth-child(7){left:32%;width:160px;height:160px;animation-delay:7s}.bg-bubbles li:nth-child(8){left:55%;width:20px;height:20px;animation-delay:15s;animation-duration:40s}.bg-bubbles li:nth-child(9){left:25%;width:10px;height:10px;animation-delay:2s;animation-duration:40s;background-color:rgba(255,255,255,.3)}.bg-bubbles li:nth-child(10){left:90%;width:160px;height:160px;animation-delay:11s}@-webkit-keyframes square{0%{transform:translateY(0)}100%{transform:translateY(-700px) rotate(600deg)}}@keyframes square{0%{transform:translateY(0)}100%{transform:translateY(-700px) rotate(600deg)}}
+		.text-uppercase{text-transform:uppercase;}
+		.swagg-logo-wrapper{margin: 10px 0}
+		._alert {padding: 10px 0;margin: 25px 5px;font-size: 17px;background-color: #fff}
+		._alert-error {color: #c32222;border-left: 5px solid #c32222;}
+		._alert-success {color: #4CAF50;border-left: 5px solid #4CAF50;}
+		.trademark { color: #000; margin-top: 30px; }
+        input::placeholder { color: #000 }
+		form {padding: 20px; background-color: rgba(255, 255, 255, 0.67); margin: auto; border-radius: 16px; max-width: 300px;}
+		.appname-logo-wrapper{ margin: 15px 0; }
+		.appname-logo-wrapper img { max-width: 145px; border: 1px solid #fff; border-radius: 5px; padding: 2px; }
+	</style>
+</head>
+<body>
+	<div id="app" class="app-page">
+
+		<main>
+			<div class="wrapper">
+				<div class="container">
+
+					<div class="swagg-logo-wrapper">
+						<img height="100" title="Swagg 2.0" src="{{ getCDN('swagg/assets/img/swagg-logo.png') }}">
+					</div>
+
+					<form id="form" class="form" action="{{ path('_authAdmin') }}" method="post">
+            			{{ csrfToken() }}
+						<h1 class="app-name text-uppercase">{{ APP_NAME }}</h1>
+						<div class="appname-logo-wrapper">
+							<img style="max-width:150px" title="{{ APP_NAME }}" src="{{ getAsset('logo.png?v=') ~ random() }}">
+						</div>
+						<div id="alert_wrapper">
+							{% if userWasNotFound is defined and userWasNotFound is not null %}
+								<p id="not_found" class="_alert _alert-error hidden err-msg">Identifiants incorrects</p>
+							{% elseif welcomeMessage is defined %}
+								<p id="found" class="_alert _alert-success hidden err-msg">{{welcomeMessage|raw}}</p>
+								<script>
+									_.delay(function(){
+										__.redirect('_admin/dashboard');
+									}, 3000)
+								</script>
+							{% endif %}
+						</div>
+						{% if welcomeMessage is not defined %}
+							<div id="controls_wrapper">
+								<input type="text" name="ident" placeholder="Nom d'Utilisateur ou Email" value="{{ attr(posted, 'ident') }}" required>
+								<input type="password" name="password" placeholder="Mot de passe" required>
+								<button type="submit">Connexion</button>
+							</div>
+						{% endif %}
+						<p class="trademark">
+							<a href="{{ getUrl() }}" target="_blank">{{ getAppEnv('APP_ORIGIN') ~'/'~ getAppEnv('APP_PREFIX') }}</a><br><br>
+							<p style="color:#000">© {{ getDateTime().format('Y') }} <span class="app-name">{{APP_NAME}} Tous droits réservés</span></p>
+						<p>
+					</form>
+				</div>
+				
+				<ul class="bg-bubbles">
+					<li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li>
+				</ul>
+			</div>
+		</main>
+
+		<div id="snackbars_wrapper" class="snackbars-wrapper"></div>
+
+		<footer style="position: fixed;bottom: 0;right: 0;margin: 10px 15px;"><b>MySwagg</b> v2.0.0, a CMS by <a href="https://www.silveredovoui.com" target="_blank" style"color:green"><b>stOne</b></a></footer>
+	</div>
+
+</body>
+</html>

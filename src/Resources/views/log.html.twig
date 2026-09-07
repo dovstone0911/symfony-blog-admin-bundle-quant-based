@@ -1,0 +1,77 @@
+{% extends '@DovStoneSymfonyBlogAdminBundleMoSQLBased/base.html.twig' %}
+
+{% import '@DovStoneSymfonyBlogAdminBundleMoSQLBased/partials/macros.html.twig' as bundleMacros %}
+
+{% block title %}{{ data.title }}{% endblock %}
+
+{% block main %}
+
+    {% include '@DovStoneSymfonyBlogAdminBundleMoSQLBased/partials/search.html.twig' %}
+
+    <div data-loadmore-view>
+
+        {% if data.bloggies is empty %}
+            {{ getBundleEmptyListView() }}
+        {% else %}
+
+            <div class="tiles">
+                <div class="tile">
+                    <div class="content">
+                        <div class="table-responsive">
+
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th data-minmax="20" class="text-center">N°</th>
+                                        <th data-minmax="80" class="text-center">Actions</th>
+                                        <th data-minmax="135" class="text-center">Création</th>
+                                        <th>Log</th>
+                                    </tr>
+                                </thead>
+                                <tbody data-loadmore-replacement>
+                                    {% for p in data.bloggies %}
+                                        <tr>
+                                            <td class="text-center" data-indexify="0"></td>
+                                            <td class="text-center">
+                                                <div class="table-actions cell-container">
+                                                    <div class="cell">
+                                                        <a data-csrf-token="{{ csrfToken(false) }}" data-undoable="{{ path('_deleteBloggy', {'id': attr(p, 'id')}) }}" data-undoable-parent="tr" title="Supprimer" class="btn btn-xs btn-danger">
+                                                            <i class="fa fa-trash"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">{{ attr(p, 'created_at')|date("d/m/Y à H:i") }}</td>
+                                            <td>
+                                                <div class="no-mg alert alert-{{ attr(p, '_level')|raw }}">{{ attr(p, '_message')|raw }}</div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+
+                            </table>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{ bundleMacros.loadMore({ 'knpPaginator': data.knpPaginator }) }}
+
+        {% endif %}
+
+    </div>
+                
+    <style type="text/less">
+        .tile {
+            .content {
+                .alert { padding: 5px;
+                    b { font-family: sans-serif }
+                    a { max-width: initial; display: initial; text-decoration: underline; padding: 0 }
+                    .mle { text-transform: uppercase }
+                }
+            }
+        }
+    </style> 
+
+{% endblock %}

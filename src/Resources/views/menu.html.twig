@@ -1,0 +1,235 @@
+table mg-top"><ul class="ui-sortable"></ul></div>{% extends '@DovStoneSymfonyBlogAdminBundleMoSQLBased/base.html.twig' %}
+
+{% import '@DovStoneSymfonyBlogAdminBundleMoSQLBased/partials/macros.html.twig' as bundleMacros %}
+
+{% block title %}{{ data.title }}{% endblock %}
+{% block btnAdd %}
+    {% if data.is == 'list' and userCan('edit', false) %}
+        <a href="{{ data.btnAdd|raw }}" class="btn-add btn btn-primary btn-sm"><i class="fa fa-plus"></i>Ajouter</a>
+    {% endif %}
+{% endblock %}
+{% block main %}
+
+    {% if data.is == 'list' %}
+        
+        <div data-loadmore-view>
+            {% if data.bloggies is empty %}
+                {{ getBundleEmptyListView() }}
+            {% else %}
+                <div class="tiles">
+                    <div class="tile tile-table">
+                        <div class="content">
+                            <div class="table-responsive">
+
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th data-minmax="20" class="text-center">N°</th>
+                                            <th data-minmax="100" class="text-center">Actions</th>
+                                            <th>Titre</th>
+                                            <th data-minmax="130" class="text-center">Création</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody data-loadmore-replacement>
+                                        {% for m in data.bloggies %}
+                                            <tr>
+                                                <td class="text-center" data-indexify="0"></td>
+                                                <td class="text-center">
+                                                    <div class="table-actions cell-container">
+                                                        <div class="cell">
+                                                            <a data-csrf-token="{{ csrfToken(false) }}" data-undoable="{{ path('_deleteBloggy', {'id': attr(m, 'id')}) }}" data-undoable-parent="tr" title="Supprimer" class="btn btn-xs btn-danger">
+                                                                <i class="fa fa-trash"></i>
+                                                            </a>
+                                                        </div>
+                                                        <div class="cell">
+                                                            <a href="{{ path('_updateBloggy', {'type': 'menu', 'id':attr(m, 'id')}) }}" title="Modifier" class="btn btn-xs btn-info">
+                                                                <i class="fa fa-pencil"></i>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>{{  attr(m, 'title') }}</td>
+                                                <td class="text-center">{{  attr(m, 'created_at')|date("d/m/Y à H:i") }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {{ bundleMacros.loadMore({ 'knpPaginator': data.knpPaginator }) }}
+            {% endif %}
+        </div>
+
+    {% else %}
+
+        {% set p = data.bloggy ?? [] %}
+
+        <form action="{{data.formAction}}" method="post">
+            {{ csrfToken() }}
+            <div class="tiles">
+                
+                <div class="row">
+
+                    <div class="col-md-4">
+                        <div class="tile">
+                            <header><h3 class="title">Menu de navigation</h3></header>
+                            <div class="content">
+                                <div class="row">
+                                    <div class="col-md-12" id="menu_nav_containment">
+
+                                        {{ gfInput("Nom du menu", 'title', attr(p, 'title'), 'required')|raw }}
+                                        <br>
+                                        {{ gfInput("Slug", 'slug', attr(p, 'slug'))|raw }}
+
+                                        <div class="gf-wrapper mg-top">
+                                            <select name="structure" class="_select2-basic gf-control form-control" data-select-option="{{ attr(p, 'structure') }}">{{ data.navStructures }}</select>
+                                            <div class="gf-label">Structure (<em>Sera appliquée à tous les éléments du menu</em>)</div>
+                                        </div>
+
+                                        <div id="menu_navpreview" class="menu-nav-preview unselectable mg-top"><ul></ul></div>
+                                        <textarea name="pagesId" id="pagesids" class="hidden">{{ attr(p, 'pagesId', '[]') }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-8">
+                        <div class="tile">
+                            <header><h3 class="title">Pages</h3></header>
+                            <div class="content">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div id="menu_pages_wrapper" class="menu-pages-wrapper">{{ data.pagesAsCheckboxes }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+            <footer class="submit-wrapper">
+                <button class="btn btn-danger" type="submit">Enregistrer</button>    
+            </footer>
+        </form>
+
+    {% endif %}
+
+    <style type="text/less">
+
+        .content {
+            ul { list-style: none; padding: 0; }
+        }
+        .menu-nav-preview {
+            border: 1px dashed #ccc; padding: 5px; min-height: 50px ;
+            ul {
+                li {
+                    border: 1px dotted #ccc; margin: 5px auto; height: 50px; line-height: 50px; cursor: grab; padding: 0 30px;
+                    &.sorting-item { background-color: #2baea8; color: #fff; box-shadow: 1px 5px 10px 0 rgba(0, 0, 0, 0.275); border-style: solid; border-color: #999; }
+                }
+            }
+        }
+
+        .menu-pages-wrapper  {
+            li { display: table; width: 100%; margin-top: 15px }
+            span { position: relative; top: -2px }
+        }
+
+        .depths {
+            .depth { margin-left: 40px; font-size: 12px }
+        }
+    </style>
+
+    <script>
+        AddScript(function(){
+            "use strict";
+                        
+            __.jqueryUi();
+
+            var $menu_pages_wrapper = $('#menu_pages_wrapper'),
+                $menu_navpreview = $('#menu_navpreview'),
+                $preview = $menu_navpreview.find('ul'),
+                $pagesids = $('#pagesids'),
+                Nav = {
+                    init: function(){
+
+                        this.dataJs();
+
+                        _.delay(function(){
+                            try {
+                                var pagesids = $.parseJSON($pagesids.html());
+                                $.each(pagesids, function (i, pageid) {
+                                    $menu_pages_wrapper.find('input[type="checkbox"][value="' + pageid + '"]').trigger('click');
+                                });
+                            } catch (e) {}
+                        }, 500)
+                    },
+                    dataJs: function(){
+                        __.dataJs({
+                            navs: {
+                                appendToNav: function ($trigger) {
+                                    Nav.handleCheck($trigger);
+                                },
+                                collapse: function ($trigger) { }
+                            }
+                        });
+                    },
+                    handleCheck: function($input){
+
+                        var id = $input.parents('li').attr('data-id');
+
+                            __.elementExistsAlias({
+                                el: $preview.find('[data-id="' + id + '"]'),
+                                onNotExists: function ($el) {
+                                    $preview.append(
+                                        $('<li data-id="' + id + '" />').append(
+                                            $input.find('~.state label').text()
+                                        )
+                                    );
+                                    Nav.bindJqueryUi();
+                                },
+                                onExists: function($el){
+                                    $el.remove();
+                                }
+                            });
+                            Nav.resortPagesIds();
+                    },
+                    bindJqueryUi: function () {
+
+                        __.jqueryUi({
+                            onLoaded: function () {
+                                $preview.sortable({
+                                    connectWith: '#menu_navpreview',
+                                    placeholder: "ui-state-highlight",
+                                    containment: '#menu_nav_containment',
+                                    start: function (a, b) {
+                                        b.item.addClass('sorting-item');
+                                    },
+                                    stop: function (a, b) {
+                                        b.item.removeClass('sorting-item');
+                                        Nav.resortPagesIds();
+                                    }
+                                });
+                            }
+                        });
+                    },
+                    resortPagesIds: function(){
+                        var data = [];
+                        _.each($preview.find('li'), function (li, i) {
+                            data.push( $(li).attr('data-id') );
+                        });
+                        $pagesids.html(JSON.stringify(data))
+                    },
+                };
+
+            __.debounce('AddMenuScript', 200, function(){ Nav.init(); });
+        });
+    </script>
+
+{% endblock %}
